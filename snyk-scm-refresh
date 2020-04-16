@@ -22,7 +22,20 @@ def parse_command_line_args():
   parser.add_argument(
     "--projectId", type=str, help="The project ID in Snyk, use 'all' to execute for all projects.", required=True
   )
+  parser.add_argument(
+    "--dryRun", type=bool, help="Simulate processing of the script without making calls to the Snyk API", required=False
+  )
   return parser.parse_args()
+
+snyk_token = getenv("SNYK_TOKEN")
+github_user = getenv("GITHUB_USER")
+github_pass = getenv("GITHUB_PASSWORD")
+github_token = getenv("GITHUB_TOKEN")
+args = parse_command_line_args()
+org_id = args.orgId
+project_id = args.projectId
+dryRun = False
+dry_run = args.dryRun
 
 def get_gh_repo_status(snyk_gh_repo):
   repoStatus = {}
@@ -56,7 +69,6 @@ def get_gh_repo_status(snyk_gh_repo):
 def delete_snyk_project(project_id, org_id):
   snyk_client.organizations.get(org_id).projects.get(project_id).delete()
 
-
 def delete_stale_manifests(snyk_gh_repo):
   for snyk_project in snyk_gh_projects:
     if (snyk_project["repo"] == snyk_gh_repo):
@@ -76,12 +88,18 @@ def delete_stale_manifests(snyk_gh_repo):
         sys.stdout.flush()
         delete_snyk_project(snyk_project["id"], snyk_project["org"])
 
-
 def delete_renamed_repo_manifests(snyk_gh_repo):
   for snyk_project in snyk_gh_projects:
     if (snyk_project["repo"] == snyk_gh_repo):
       delete_snyk_project(snyk_project["id"], snyk_project["org"])
-    
+
+def import_repo(snyk_gh_repo):
+  for snyk_project in snyk_gh_projects:
+    if (snyk_project["repo"] == snyk_gh_repo):
+      org = snyk_client.organizations.get(snyk_project["org"])
+      org.import_project("github.com/" + snyk_gh_repo)
+      return
+
 if (environ.get('SNYK_TOKEN', 'False') == 'False'):
   print("token not set at $SNYK_TOKEN")
   exit(1)
@@ -94,18 +112,11 @@ if (environ.get('GITHUB_TOKEN', 'False') == 'False'):
   print("github-password not set at $GITHUB_PASSWORD")
   exit(1)
 
-snyk_token = getenv("SNYK_TOKEN")
-github_user = getenv("GITHUB_USER")
-github_pass = getenv("GITHUB_PASSWORD")
-github_token = getenv("GITHUB_TOKEN")
-args = parse_command_line_args()
-org_id = args.orgId
-project_id = args.projectId
+
 
 snyk_client = SnykClient(snyk_token)
 gh_client = Github(github_token)
 
-#print("Retrieving Snyk Projects...", end="")
 sys.stdout.write("Retrieving Snyk Projects...")
 sys.stdout.flush()
 
@@ -123,13 +134,13 @@ for org in orgs:
     if p.origin == "github"
   ]
 
-
 sys.stdout.write("%d" % len(snyk_gh_projects))
 
 snyk_gh_repos = []
 for r in snyk_gh_projects:
-  if r["repo"] not in snyk_gh_repos:
-    snyk_gh_repos.append(r["repo"])
+  repo_name_no_branch = r["repo"].split("(")[0]
+  if repo_name_no_branch not in snyk_gh_repos:
+    snyk_gh_repos.append(repo_name_no_branch )
 
 
 sys.stdout.write(" [%d Unique repos]\n" % len(snyk_gh_repos))
@@ -150,8 +161,9 @@ for snyk_gh_repo in snyk_gh_repos:
   sys.stdout.flush()
   if (gh_repo_status["responseCode"] == 200):
     # import with existing name to catch any new manifests
-    print("  - [%s] Adding any new manifests" % gh_repo_status["ghName"])
-    print("  - [%s] Snyk import job submitted" % gh_repo_status["ghName"])
+    print("  - [%s] Adding any new manifests via Import" % gh_repo_status["ghName"])
+    import_repo(snyk_gh_repo)
+    #print("  - [%s] Snyk import job submitted" % gh_repo_status["ghName"])
     # remove any manifests that no longer exist 
     print("  - [%s] Checking for stale manifests" % gh_repo_status["ghName"])
     delete_stale_manifests(snyk_gh_repo)
@@ -161,6 +173,8 @@ for snyk_gh_repo in snyk_gh_repos:
   elif (gh_repo_status["responseCode"] == 301):
     # import with new name to catch any new manifests and fix broken PR status checks
     print("  - [%s] Snyk import job submitted" % gh_repo_status["ghName"])
+    import_repo(gh_repo_status["ghName"])
+    # todo: add the function to add the repo
     # remove all manifests with old name
     print("  - [%s] Removing projects under old name" % snyk_gh_repo)
     delete_renamed_repo_manifests(snyk_gh_repo)
