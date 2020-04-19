@@ -33,3 +33,8 @@ optional arguments:
   --dry-run             Simulate processing of the script without making
                         changes to Snyk
 ```
+
+## TODO
+- error handling (do not delete old projects before i know i've successfully imported the new ones
+- preserve enforced status checks at github if importing renamed projects
+- tests
