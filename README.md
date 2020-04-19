@@ -11,6 +11,11 @@ or
 ```
 python3 -m pip install -r requirements.txt
 ```
+## Environment
+```
+export SNYK_TOKEN=<snyk-token>
+export GITHUB_TOKEN=<github-token>
+```
 
 ## Instructions
 Make sure to use a user *API Token* that has acess to the Snyk Orgs you need to process with the script.  A service account will *not* work for GitHub, which is the only SCM currently supported at this time.
