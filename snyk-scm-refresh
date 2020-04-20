@@ -82,7 +82,7 @@ def delete_stale_manifests(snyk_repo_projects):
       sys.stdout.write("  - [%s] manifest %s no longer exists, deleting from Snyk..." % (snyk_repo_project["repo_full_name"], snyk_repo_project["manifest"]))
       sys.stdout.flush()
       delete_snyk_project(snyk_repo_project["id"], snyk_repo_project["org_id"])
-      stale_manifests_deleted_file.write("%s,%s,%s" % (snyk_repo_project["name"], snyk_repo_project["id"], snyk_repo_project["org_id"]))
+      stale_manifests_deleted_file.write("%s,%s,%s\n" % (snyk_repo_project["name"], snyk_repo_project["id"], snyk_repo_project["org_id"]))
       print("Done")
       if not dry_run:
         time.sleep(2)
@@ -90,7 +90,7 @@ def delete_stale_manifests(snyk_repo_projects):
 def delete_renamed_repo_manifests(snyk_repo_projects):
   for snyk_repo_project in snyk_repo_projects:
     delete_snyk_project(snyk_repo_project["id"], snyk_repo_project["org_id"])
-    renamed_manifests_deleted_file.write("%s,%s,%s" % (snyk_repo_project["name"], snyk_repo_project["id"], snyk_repo_project["org_id"]))
+    renamed_manifests_deleted_file.write("%s,%s,%s\n" % (snyk_repo_project["name"], snyk_repo_project["id"], snyk_repo_project["org_id"]))
     if not dry_run:
       time.sleep(2)
 
@@ -193,7 +193,7 @@ def main():
     elif (gh_repo_status["response_code"] == 404):
       # potential deletes, output to file for review
       print("  - [%s] Logging potential delete" % snyk_gh_repo["full_name"])
-      potential_deletes_file.write("%s" % (snyk_gh_repo["full_name"]))
+      potential_deletes_file.write("%s\n" % (snyk_gh_repo["full_name"]))
     
     # project has moved/been renamed
     elif (gh_repo_status["response_code"] == 301):

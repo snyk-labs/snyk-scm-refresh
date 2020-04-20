@@ -41,6 +41,12 @@ optional arguments:
                         changes to Snyk
 ```
 
+Each run generates additional output files:
+  - _potential-deletes.csv
+  - _stale-manifests-deleted.csv
+  - _renamed-manifests-deleted.csv
+  
+
 ## TODO
 - error handling (do not delete old projects before i know i've successfully imported the new ones
 - preserve enforced status checks at github if importing renamed projects
