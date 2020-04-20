@@ -1,14 +1,11 @@
 #!/usr/local/bin/python3
 import argparse
-import json
 import time
 import logging
 import sys
 import requests
 import github
-#import github
 from github import Github, GithubException
-from distutils import util
 from os import getenv, environ
 from snyk import SnykClient
 
