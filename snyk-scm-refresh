@@ -12,10 +12,10 @@ from snyk import SnykClient
 def parse_command_line_args():
   parser = argparse.ArgumentParser()
   parser.add_argument(
-    "--org-id", type=str, help="The Snyk Organisation Id. If omitted, process all orgs the Snyk user has access to.", required=False
+    "--org-id", type=str, help="The Snyk Organisation Id found in Organization > Settings. If omitted, process all orgs the Snyk user has access to.", required=False
   )
   parser.add_argument(
-    "--project-id", type=str, help="The Snyk Project Id. if omitted, process all projects.", required=False
+    "--project-id", type=str, help="The Snyk Project Id found in Project > Settings. if omitted, process all projects.", required=False
   )
   parser.add_argument(
     "--dry-run", help="Simulate processing of the script without making changes to Snyk", required=False, action='store_true'
@@ -31,19 +31,19 @@ def get_gh_repo_status(snyk_gh_repo):
   headers['Authorization'] = headers['Authorization'] % (github_token)
   requestURL = 'https://api.github.com/repos/' + snyk_gh_repo["full_name"]
   #print("requestURL: " + requestURL)
-  
-  try: 
+
+  try:
     response = requests.get(url=requestURL, allow_redirects=False, headers=headers)
     #print("response_code: %d" % response.status_code)
     if (response.status_code == 200):
-      repo_status = { "response_code": response.status_code, 
-         "response_message": "Match", 
+      repo_status = { "response_code": response.status_code,
+         "response_message": "Match",
           "gh_name": snyk_gh_repo["name"],
           "snyk_org_id": snyk_gh_repo["org_id"],
           "gh_owner": snyk_gh_repo["owner"] }
     elif (response.status_code == 404):
-      repo_status = { "response_code": response.status_code, 
-        "response_message": "Not Found", 
+      repo_status = { "response_code": response.status_code,
+        "response_message": "Not Found",
         "gh_name": None,
         "snyk_org_id": snyk_gh_repo["org_id"],
         "gh_owner": snyk_gh_repo["owner"] }
@@ -55,14 +55,14 @@ def get_gh_repo_status(snyk_gh_repo):
         repo_new_name = repo_new_full_name.split("/")[1]
       else:
         repo_new_name = ''
-      repo_status = { "response_code": response.status_code, 
-        "response_message": "Moved %s" % repo_new_name, 
-        "gh_name": repo_new_name, 
+      repo_status = { "response_code": response.status_code,
+        "response_message": "Moved %s" % repo_new_name,
+        "gh_name": repo_new_name,
         "snyk_org_id": snyk_gh_repo["org_id"],
         "gh_owner": repo_new_owner }
   except requests.exceptions.RequestException as e:
     repo_status = e.reason
-  
+
   return repo_status
 
 def delete_snyk_project(project_id, org_id):
@@ -119,7 +119,7 @@ def build_snyk_project_list(snyk_orgs):
           branch_from_name = ""
         split_repo_name = tmp_branch_split[0].split("/")
         snyk_gh_projects.append(
-          { 
+          {
             "id": p.id, \
             "name": p.name, \
             "repo_full_name": split_project_name[0].split("(")[0], \
@@ -151,7 +151,7 @@ def main():
   print("dry-run = %s" % dry_run)
   sys.stdout.write("Retrieving Snyk Projects...")
   sys.stdout.flush()
-  
+
   snyk_orgs = []
 
   # if --orgId exists, use it
@@ -160,11 +160,11 @@ def main():
     snyk_orgs.append(snyk_client.organizations.get(org_id))
   else:
     snyk_orgs = snyk_client.organizations.all()
-  
+
   # build complete Snyk project list
   snyk_gh_projects = build_snyk_project_list(snyk_orgs)
   sys.stdout.write("%d" % len(snyk_gh_projects))
-  
+
   # build unique repos in Snyk from project list
   snyk_gh_repos = unique_repos(snyk_gh_projects)
   sys.stdout.write(" [%d Unique repos]\n" % len(snyk_gh_repos))
@@ -176,7 +176,7 @@ def main():
     sys.stdout.write("Snyk name: %s | Github Status: %s [%s]\n" \
       % (snyk_gh_repo["full_name"], gh_repo_status["response_code"], gh_repo_status["response_message"]))
     sys.stdout.flush()
-    
+
     # project not renamed/moved
     if (gh_repo_status["response_code"] == 200):
       # remove any manifests that no longer exist at the github repo before re-importing
@@ -188,13 +188,13 @@ def main():
       print("  - [%s] Adding any new manifests via Import" % gh_repo_status["gh_name"])
       if not dry_run:
         import_repo(snyk_gh_repo["org_id"], snyk_gh_repo["owner"], snyk_gh_repo["name"])
-      
+
     # project no longer exists
     elif (gh_repo_status["response_code"] == 404):
       # potential deletes, output to file for review
       print("  - [%s] Logging potential delete" % snyk_gh_repo["full_name"])
       potential_deletes_file.write("%s\n" % (snyk_gh_repo["full_name"]))
-    
+
     # project has moved/been renamed
     elif (gh_repo_status["response_code"] == 301):
       # import with new name to catch any new manifests and fix broken PR status checks
@@ -205,10 +205,10 @@ def main():
       print("  - [%s] Removing projects under old name" % snyk_gh_repo["full_name"])
       if not dry_run:
         delete_renamed_repo_manifests(snyk_repo_projects)
-  
+
     if not dry_run:
       time.sleep(10)
-  
+
   # check and log status of submitted import jobs
 
 if __name__ == '__main__':
@@ -217,7 +217,7 @@ if __name__ == '__main__':
     exit(1)
 
   if (environ.get('GITHUB_TOKEN', 'False') == 'False'):
-    print("github-password not set at $GITHUB_PASSWORD")
+    print("github-token not set at $GITHUB_TOKEN")
     exit(1)
 
   LOG_FILENAME = sys.argv[0] + '.log'
@@ -237,5 +237,5 @@ if __name__ == '__main__':
   potential_deletes_file = open("%s_potential-deletes.csv" % sys.argv[0],"w")
   stale_manifests_deleted_file = open("%s_stale-manifests-deleted.csv" % sys.argv[0], "w")
   renamed_manifests_deleted_file = open("%s_renamed-manifests-deleted.csv" % sys.argv[0], "w")
-  
+
   main()
