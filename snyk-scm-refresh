@@ -10,7 +10,6 @@ from os import environ, getenv
 import github
 import requests
 from github import Github
-#, GithubException
 from snyk import SnykClient
 
 
