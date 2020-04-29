@@ -1,5 +1,5 @@
 # snyk-scm-refresh
-Keeps Snyk in sync with your Github Repos
+Keeps Snyk projects in sync with their associated Github repos
 
 ## Dependencies
 pysnyk, PyGithub, requests
