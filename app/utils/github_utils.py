@@ -63,14 +63,3 @@ def get_gh_repo_status(snyk_gh_repo, github_token):
         repo_status = err.response
 
     return repo_status
-
-
-def query_branch_checks(gh_repo):
-    default_branch_name = gh_repo.default_branch
-    default_branch = gh_repo.get_branch(default_branch_name)
-    try:
-        required_checks = default_branch.get_required_status_checks().contexts
-    except GithubException:
-        required_checks = []
-
-    return required_checks
