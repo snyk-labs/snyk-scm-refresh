@@ -136,7 +136,6 @@ def build_snyk_project_list(snyk_orgs):
                         "repo_name": split_repo_name[1].split("(")[0],
                         "manifest": split_project_name[1],
                         "org_id": snyk_org.id,
-                        "snyk_github_check_name": f"license/snyk - {split_project_name[1]} ({snyk_org.name})",
                         "gh_integration_id": gh_integration_id,
                         "branch_from_name": branch_from_name,
                     }
