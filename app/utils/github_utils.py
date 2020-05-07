@@ -34,6 +34,9 @@ def get_gh_repo_status(snyk_gh_repo, github_token):
         elif response.status_code == 404:
             response_message = "Not Found"
 
+        elif response.status_code == 401:
+            raise RuntimeError("GitHub request is unauthorized!")
+
         elif response.status_code == 301:
             follow_response = requests.get(
                 url=response.headers["Location"], headers=headers
