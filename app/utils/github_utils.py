@@ -18,6 +18,7 @@ def get_gh_repo_status(snyk_gh_repo, github_token):
 
     repo_owner = snyk_gh_repo["owner"]
     repo_name = snyk_gh_repo["name"]
+    response_message = ""
 
     headers = {"Authorization": "Bearer %s"}
     headers["Authorization"] = headers["Authorization"] % (github_token)
