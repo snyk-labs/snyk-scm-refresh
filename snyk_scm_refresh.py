@@ -95,7 +95,7 @@ def delete_renamed_repo_projects(import_status_checks):
         # list to track which checks to remove as we go
         checks_to_pop = []
         # get unique jobs from import results
-        unique_import_jobs = [] 
+        unique_import_jobs = []
         for import_status_check in import_status_checks:
             if import_status_check["job_id"] not in {u["job_id"] for u in unique_import_jobs}:
                 unique_import_jobs.append(
@@ -106,11 +106,10 @@ def delete_renamed_repo_projects(import_status_checks):
                     }
                 )
 
-        """
-        for each unique import job:
-            1. check the status of each nested log entry (repo import), and 
-            2. delete the corresponding stale projects under the old repo name
-        """
+        # for each unique import job:
+        # 1. check the status of each nested log entry (repo import), and
+        # 2. delete the corresponding stale projects under the old repo name
+
         for import_job in unique_import_jobs:
             import_status = get_import_status(
                 import_job["import_status_url"], import_job["org_id"]
@@ -136,17 +135,17 @@ def delete_renamed_repo_projects(import_status_checks):
                                         import_status_check["stale_project_id"])
                                 )
                                 if delete_snyk_project(
-                                    import_status_check["stale_project_id"],
-                                    import_status_check["org_id"]
+                                        import_status_check["stale_project_id"],
+                                        import_status_check["org_id"]
                                     ):
-                                        RENAMED_MANIFESTS_PENDING_FILE.write(
-                                            "%s/%s:%s" % (
-                                                import_status_check["owner"],
-                                                import_status_check["name"],
-                                                import_status_check["stale_project_id"]
-                                            )
-                                        )      
-                                checks_to_pop.append(import_status_check)         
+                                    RENAMED_MANIFESTS_PENDING_FILE.write(
+                                        "%s/%s:%s" % (
+                                            import_status_check["owner"],
+                                            import_status_check["name"],
+                                            import_status_check["stale_project_id"]
+                                        )
+                                    )
+                                checks_to_pop.append(import_status_check)
                     check_index += 1
             # remove entry from import_status_check
             for check_to_pop in checks_to_pop:
@@ -160,7 +159,7 @@ def delete_renamed_repo_projects(import_status_checks):
         if check_count == PENDING_REMOVAL_MAX_CHECKS:
             print(
                 "Exiting with %d pending removals, logging to %s ..." % (
-                    len(import_status_checks), 
+                    len(import_status_checks),
                     RENAMED_MANIFESTS_PENDING_FILE
                 )
             )
@@ -172,7 +171,7 @@ def delete_renamed_repo_projects(import_status_checks):
                         import_status_check["stale_project_id"]
                     )
                 )
-        else: 
+        else:
             print("Checking back in 30 seconds...")
         time.sleep(PENDING_REMOVAL_CHECK_INTERVAL)
 
