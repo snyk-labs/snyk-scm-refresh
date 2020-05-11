@@ -1,4 +1,6 @@
 # snyk-scm-refresh
+[![Known Vulnerabilities](https://snyk.io/test/github/snyk-tech-services/snyk-scm-refresh/badge.svg)](https://snyk.io/test/github/snyk-tech-services/snyk-scm-refresh)
+
 Keeps Snyk projects in sync with their associated Github repos
 
 ## Dependencies
