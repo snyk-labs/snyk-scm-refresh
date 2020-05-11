@@ -20,6 +20,8 @@ export GITHUB_TOKEN=<github-token>
 ## Instructions
 Make sure to use a user *API Token* that has acess to the Snyk Orgs you need to process with the script.  A service account will *not* work for GitHub, which is the only SCM currently supported at this time.
 
+Ensure that your GITHUB_TOKEN has access to the repos contained in the Snyk Orgs in scope
+
 If any of the following are true, do not use this tool:
 - If you have .NET projects, re-import will break projects (PR status checks) due to target framework.
 - If monitoring non-default branches
@@ -45,9 +47,8 @@ Each run generates additional output files:
   - _potential-deletes.csv
   - _stale-manifests-deleted.csv
   - _renamed-manifests-deleted.csv
+  - _renamed_manifests-pending.csv
   
 
 ## TODO
-- error handling (do not delete old projects before i know i've successfully imported the new ones
-- preserve enforced status checks at github if importing renamed projects
-- tests
+- additional tests
