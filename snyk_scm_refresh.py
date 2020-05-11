@@ -106,7 +106,7 @@ def delete_renamed_repo_projects(import_status_checks):
                     }
                 )
 
-        # for each unique import job:
+        # for each unique import job
         # 1. check the status of each nested log entry (repo import), and
         # 2. delete the corresponding stale projects under the old repo name
 
@@ -393,7 +393,6 @@ if __name__ == "__main__":
 
     snyk_client = SnykClient(snyk_token)
 
-    SUMMARY_FILE = open("%s_summary.csv" % LOG_PREFIX, "w")
     POTENTIAL_DELETES_FILE = open("%s_potential-deletes.csv" % LOG_PREFIX, "w")
     STALE_MANIFESTS_DELETED_FILE = open(
         "%s_stale-manifests-deleted.csv" % LOG_PREFIX, "w"
