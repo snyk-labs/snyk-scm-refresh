@@ -49,7 +49,7 @@ def get_gh_repo_status(snyk_gh_repo, github_token):
                 repo_owner = ""
                 repo_name = ""
 
-            response_message = "Moved %s" % repo_name
+            response_message = "Moved to %s" % repo_name
 
         repo_status = {
             "response_code": response.status_code,
