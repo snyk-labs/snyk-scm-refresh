@@ -24,7 +24,7 @@ def no_requests(mocker):
     "status_code, response_message, repo, name, owner",
     [
         (200, "Match", "test_org/test_repo", "test_repo", "test_owner"),
-        (301, "Moved new_repo", "new_owner/new_repo", "new_repo", "new_owner"),
+        (301, "Moved to new_repo", "new_owner/new_repo", "new_repo", "new_owner"),
         (404, "Not Found", "test_org/test_repo", None, None)
     ],
 )
