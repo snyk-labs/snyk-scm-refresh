@@ -1,0 +1,17 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.13.5
+# ignores vulnerabilities until expiry date; change duration by modifying expiry date
+ignore:
+  'snyk:lic:pip:chardet:LGPL-2.1':
+    - '*':
+        reason: None Given
+        expires: 2020-06-12T18:59:31.426Z
+  'snyk:lic:pip:certifi:MPL-2.0':
+    - '*':
+        reason: None Given
+        expires: 2020-06-12T19:00:42.674Z
+  'snyk:lic:pip:pygithub:LGPL-3.0':
+    - '*':
+        reason: None Given
+        expires: 2020-06-12T19:00:54.998Z
+patch: {}
