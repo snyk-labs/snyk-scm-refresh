@@ -10,7 +10,7 @@ For repos with at least 1 project already in Snyk:
 - Detect repo name change and update (add new, remove old)
 - Detect deleted repos and log for review
 
-**TOP NOW IF ANY OF THE FOLLOWING ARE TRUE**
+**STOP NOW IF ANY OF THE FOLLOWING ARE TRUE**
 - You have .NET projects, re-import will break projects (PR status checks) due to target framework
 - If monitoring non-default branches
 - Using a brokered Github.com Integration
@@ -39,12 +39,12 @@ Ensure that your GITHUB_TOKEN has access to the repos contained in the Snyk Orgs
 If unsure, try one org at a time with --org-id
 
 
-**Warning:** This tool will delete projects from snyk that are detected as stale or have since been renamed
-  Use the --dry-run option to e
+**Recommended:** This tool will delete projects from Snyk that are detected as stale or have since been renamed
+  Use the --dry-run option to verify the execution plan for the first run
 
 ### Usage
 ```
-usage: snyk-scm-refresh [-h] [--org-id=ORG_ID] [--project-id=PROJECT_ID]
+usage: snyk-scm-refresh.py [-h] [--org-id=ORG_ID] [--project-id=PROJECT_ID]
                         [--dry-run]
 
 optional arguments:
