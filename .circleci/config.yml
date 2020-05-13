@@ -41,7 +41,6 @@ workflows:
             branches:
               only:
                 - master
-  build_and_test:
     jobs:
       - build-test:
           context: SNYK
