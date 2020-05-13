@@ -228,7 +228,14 @@ def build_snyk_project_list(snyk_orgs):
     snyk_projects = []
 
     for snyk_org in snyk_orgs:
-        gh_integration_id = snyk_org.integrations.filter(name="github")[0].id
+        try:
+            gh_integration_id = snyk_org.integrations.filter(name="github")[0].id
+        except snyk.errors.SnykHTTPError:
+            print(
+                "\n\nUnable to retrieve GitHub integration id for org: %s, check permissions\n\n"
+                % snyk_org.name
+            )
+            sys.exit(1)
         if project_id_filter:
             snyk_projects.append(snyk_org.projects.get(project_id_filter))
         else:
