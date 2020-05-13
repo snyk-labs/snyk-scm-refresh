@@ -37,10 +37,6 @@ workflows:
     jobs:
       - build-test:
           context: SNYK
-          filters:
-            branches:
-              only: 
-                - /pull\/[0-9]+/
       - monitor:
           context: SNYK
           requires:
