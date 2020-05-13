@@ -9,10 +9,10 @@ jobs:
       - checkout
       - run:
           name: "Install Dependencies"
-          command: 'pip install -r requirements.txt'
+          command: 'pip install -r requirements.txt --user'
       - run:
           name: "Install Dev Dependencies"
-          command: 'pip install -r requirements-dev.txt'
+          command: 'pip install -r requirements-dev.txt --user'
       - run:
           name: "Test"
           command: 'pytest'
