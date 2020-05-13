@@ -15,7 +15,7 @@ jobs:
           command: 'pip install -r requirements-dev.txt --user'
       - run:
           name: "Test"
-          command: 'pytest'
+          command: '$HOME/bin/pytest'
       - snyk/scan:
           fail-on-issues: true
           monitor-on-build: false
