@@ -286,6 +286,117 @@ def build_unique_repos(snyk_gh_projects):
             )
     return snyk_gh_repos
 
+def get_snyk_projects_from_github_repo(snyk_gh_repo, snyk_gh_projects):
+    snyk_repo_projects = list(
+        filter(
+            lambda x: x["repo_full_name"] == snyk_gh_repo["full_name"],
+            snyk_gh_projects,
+        )
+    )
+
+    return  snyk_repo_projects
+
+def sync_existing_snyk_project(snyk_gh_repo, snyk_repo_projects):
+    # remove any manifests that no longer exist at the github repo before re-importing
+
+    if not dry_run:
+        print(
+            "  - [%s] Checking (%d) for stale manifests"
+            % (snyk_gh_repo["full_name"], len(snyk_repo_projects))
+        )
+        delete_stale_manifests(snyk_repo_projects)
+
+        # then, import with existing name to catch any new manifests
+        print(
+            "  - [%s] Adding any new manifests via Import"
+            % snyk_gh_repo["full_name"]
+        )
+
+        import_github_repo(
+            snyk_gh_repo["org_id"], snyk_gh_repo["owner"], snyk_gh_repo["name"]
+        )
+
+    else:
+
+        print(
+            "  - [%s] Checking (%d) for stale manifests, not deleting because dry run"
+            % (snyk_gh_repo["full_name"], len(snyk_repo_projects))
+        )
+
+        print(
+            "  - [%s] Would add any new manifests via Import, not adding because of dry run"
+            % snyk_gh_repo["full_name"]
+        )
+
+def sync_renamed_snyk_project_and_get_import_statuses(gh_repo_status, snyk_repo_projects, import_status_checks):
+    # import with new name to catch any new manifests and fix broken PR status checks
+    print("  - [%s] Snyk import job submitted" % gh_repo_status["gh_name"])
+    if not dry_run:
+        import_response = import_github_repo(
+            gh_repo_status["snyk_org_id"],
+            gh_repo_status["gh_owner"],
+            gh_repo_status["gh_name"],
+        )
+
+    print(
+        "  - [%s] Import status check queued, old project removals pending..."
+        % gh_repo_status["gh_name"]
+    )
+    # build list of projects associated to a renamed repo, to remove later
+    if not dry_run:
+        for snyk_repo_project in snyk_repo_projects:
+            print(
+                "        %s [%s]" % (
+                    snyk_repo_project["name"],
+                    snyk_repo_project["id"]
+                )
+            )
+            status_check = import_response.copy()
+            status_check.update({"stale_project_id": snyk_repo_project["id"]})
+            import_status_checks.append(status_check)
+
+    return import_status_checks
+
+def process_snyk_project_and_get_import_statuses(snyk_repo_projects, snyk_gh_repo, import_status_checks):
+
+    try:
+        gh_repo_status = get_gh_repo_status(snyk_gh_repo, github_token)
+    except RuntimeError as err:
+        raise RuntimeError("Failed to query GitHub repository!") from err
+
+    print(
+        "Snyk Org: %s | Snyk name: %s" % (
+            snyk_gh_repo["org_name"],
+            snyk_gh_repo["full_name"],
+        )
+    )
+    print(
+        "  - [%s] GitHub Status: %s [%s]" % (
+            snyk_gh_repo["full_name"],
+            gh_repo_status["response_code"],
+            gh_repo_status["response_message"]
+        )
+    )
+
+    # project no longer exists
+    if gh_repo_status["response_code"] == 404:
+        # potential deletes, output to file for review
+        print("  - [%s] Logging potential delete" % snyk_gh_repo["full_name"])
+        POTENTIAL_DELETES_FILE.write("%s,%s\n" % (snyk_gh_repo["org_name"], snyk_gh_repo["full_name"]))
+
+    # project not renamed/moved
+    elif gh_repo_status["response_code"] == 200:
+        sync_existing_snyk_project(snyk_gh_repo, snyk_repo_projects)
+
+
+    # project has moved/been renamed
+    elif gh_repo_status["response_code"] == 301:
+        import_statuses = sync_renamed_snyk_project_and_get_import_statuses(gh_repo_status, snyk_repo_projects, import_status_checks)
+
+        return import_statuses
+
+    return []
+
 def main():
     """Main"""
 
@@ -312,97 +423,24 @@ def main():
     sys.stdout.write(" [%d Unique repos]\n" % len(snyk_gh_repos))
 
     # clean up snyk projects
+    i = 1
     for snyk_gh_repo in snyk_gh_repos:
-        try:
-            gh_repo_status = get_gh_repo_status(snyk_gh_repo, github_token)
-            print(
-                "Snyk Org: %s | Snyk name: %s" % (
-                    snyk_gh_repo["org_name"],
-                    snyk_gh_repo["full_name"],
-                )
-            )
-            print(
-                "  - [%s] GitHub Status: %s [%s]" % (
-                    snyk_gh_repo["full_name"],
-                    gh_repo_status["response_code"],
-                    gh_repo_status["response_message"]
-                )
-            )
 
-            # project not renamed/moved
-            if gh_repo_status["response_code"] == 200:
-                # remove any manifests that no longer exist at the github repo before re-importing
-                snyk_repo_projects = list(
-                    filter(
-                        lambda x: x["repo_full_name"] == snyk_gh_repo["full_name"],
-                        snyk_gh_projects,
-                    )
-                )
-                print(
-                    "  - [%s] Checking (%d) for stale manifests"
-                    % (snyk_gh_repo["full_name"], len(snyk_repo_projects))
-                )
-                if not dry_run:
-                    delete_stale_manifests(snyk_repo_projects)
-                # then, import with existing name to catch any new manifests
-                print(
-                    "  - [%s] Adding any new manifests via Import"
-                    % snyk_gh_repo["full_name"]
-                )
-                if not dry_run:
-                    import_github_repo(
-                        snyk_gh_repo["org_id"], snyk_gh_repo["owner"], snyk_gh_repo["name"]
-                    )
+        print(f"Processing project {str(i)}/{str(len(snyk_gh_repos))}")
 
-            # project no longer exists
-            elif gh_repo_status["response_code"] == 404:
-                # potential deletes, output to file for review
-                print("  - [%s] Logging potential delete" % snyk_gh_repo["full_name"])
-                POTENTIAL_DELETES_FILE.write("%s,%s\n" % (snyk_gh_repo["org_name"], snyk_gh_repo["full_name"]))
+        snyk_repo_projects = get_snyk_projects_from_github_repo(snyk_gh_repo, snyk_gh_projects)
 
-            # project has moved/been renamed
-            elif gh_repo_status["response_code"] == 301:
-                # import with new name to catch any new manifests and fix broken PR status checks
-                print("  - [%s] Snyk import job submitted" % gh_repo_status["gh_name"])
-                if not dry_run:
-                    import_response = import_github_repo(
-                        gh_repo_status["snyk_org_id"],
-                        gh_repo_status["gh_owner"],
-                        gh_repo_status["gh_name"],
-                    )
+        import_status_checks = process_snyk_project_and_get_import_statuses(snyk_repo_projects, snyk_gh_repo, import_status_checks)
 
-                snyk_repo_projects = list(
-                    filter(
-                        lambda x: x["repo_full_name"] == snyk_gh_repo["full_name"],
-                        snyk_gh_projects,
-                    )
-                )
-
-                print(
-                    "  - [%s] Import status check queued, old project removals pending..."
-                    % gh_repo_status["gh_name"]
-                )
-                # build list of projects associated to a renamed repo, to remove later
-                if not dry_run:
-                    for snyk_repo_project in snyk_repo_projects:
-                        print(
-                            "        %s [%s]" % (
-                                snyk_repo_project["name"],
-                                snyk_repo_project["id"]
-                            )
-                        )
-                        status_check = import_response.copy()
-                        status_check.update({"stale_project_id": snyk_repo_project["id"]})
-                        import_status_checks.append(status_check)
-            if not dry_run:
-                time.sleep(5)
-        except Exception:
-            print("  - [%s] Error occurred processing Repo" % snyk_gh_repo["full_name"])
+        if not dry_run:
+            time.sleep(5)
+        i += 1
 
     # remove renamed repo projects
     if not dry_run:
         if len(import_status_checks) > 0:
             delete_renamed_repo_projects(import_status_checks)
+
 
 if __name__ == "__main__":
     LOG_PREFIX = "snyk-scm-refresh"
