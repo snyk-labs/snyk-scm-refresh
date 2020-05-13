@@ -9,6 +9,7 @@ import time
 import re
 from os import environ, getenv
 import github
+import snyk.errors
 from snyk import SnykClient
 
 from app.utils.github_utils import (
@@ -44,7 +45,22 @@ def parse_command_line_args():
 
 def delete_snyk_project(project_id, org_id):
     """Delete a single Snyk project"""
-    return snyk_client.organizations.get(org_id).projects.get(project_id).delete()
+
+    try:
+        org = snyk_client.organizations.get(org_id)
+        project = org.projects.get(project_id)
+        return project.delete()
+    except snyk.errors.SnykNotFoundError:
+        print("    - Error retrieving project %s in org %s ..." % (project_id, org_id))
+        return False
+    except Exception:
+        print(
+            "    - Generic exception trying to delete project %s in org %s ..." % (
+                project_id,
+                org_id
+            )
+        )
+        return False
 
 def delete_stale_manifests(snyk_repo_projects):
     """Delete Snyk projects for which the corresponding manifest no longer exists"""
@@ -138,7 +154,7 @@ def delete_renamed_repo_projects(import_status_checks):
                                         import_status_check["stale_project_id"],
                                         import_status_check["org_id"]
                                     ):
-                                    RENAMED_MANIFESTS_PENDING_FILE.write(
+                                    RENAMED_MANIFESTS_DELETED_FILE.write(
                                         "%s/%s:%s" % (
                                             import_status_check["owner"],
                                             import_status_check["name"],
@@ -238,6 +254,7 @@ def build_snyk_project_list(snyk_orgs):
                         "repo_name": split_repo_name[1].split("(")[0],
                         "manifest": split_project_name[1],
                         "org_id": snyk_org.id,
+                        "org_name": snyk_org.name,
                         "gh_integration_id": gh_integration_id,
                         "branch_from_name": branch_from_name,
                     }
@@ -255,6 +272,7 @@ def build_unique_repos(snyk_gh_projects):
                     "owner": project["repo_owner"],
                     "name": project["repo_name"],
                     "org_id": project["org_id"],
+                    "org_name": project["org_name"],
                     "gh_integration_id": project["gh_integration_id"],
                     "branch_from_name": project["branch_from_name"],
                 }
@@ -290,15 +308,19 @@ def main():
     for snyk_gh_repo in snyk_gh_repos:
         try:
             gh_repo_status = get_gh_repo_status(snyk_gh_repo, github_token)
-            sys.stdout.write(
-                "Snyk name: %s | Github Status: %s [%s]\n"
-                % (
+            print(
+                "Snyk Org: %s | Snyk name: %s" % (
+                    snyk_gh_repo["org_name"],
                     snyk_gh_repo["full_name"],
-                    gh_repo_status["response_code"],
-                    gh_repo_status["response_message"],
                 )
             )
-            sys.stdout.flush()
+            print(
+                "  - [%s] GitHub Status: %s [%s]" % (
+                    snyk_gh_repo["full_name"],
+                    gh_repo_status["response_code"],
+                    gh_repo_status["response_message"]
+                )
+            )
 
             # project not renamed/moved
             if gh_repo_status["response_code"] == 200:
@@ -311,14 +333,14 @@ def main():
                 )
                 print(
                     "  - [%s] Checking (%d) for stale manifests"
-                    % (gh_repo_status["gh_name"], len(snyk_repo_projects))
+                    % (snyk_gh_repo["full_name"], len(snyk_repo_projects))
                 )
                 if not dry_run:
                     delete_stale_manifests(snyk_repo_projects)
                 # then, import with existing name to catch any new manifests
                 print(
                     "  - [%s] Adding any new manifests via Import"
-                    % gh_repo_status["gh_name"]
+                    % snyk_gh_repo["full_name"]
                 )
                 if not dry_run:
                     import_github_repo(
@@ -329,7 +351,7 @@ def main():
             elif gh_repo_status["response_code"] == 404:
                 # potential deletes, output to file for review
                 print("  - [%s] Logging potential delete" % snyk_gh_repo["full_name"])
-                POTENTIAL_DELETES_FILE.write("%s\n" % (snyk_gh_repo["full_name"]))
+                POTENTIAL_DELETES_FILE.write("%s,%s\n" % (snyk_gh_repo["org_name"], snyk_gh_repo["full_name"]))
 
             # project has moved/been renamed
             elif gh_repo_status["response_code"] == 301:
@@ -389,7 +411,7 @@ if __name__ == "__main__":
     LOG_FILENAME = LOG_PREFIX + ".log"
     logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG, filemode="w")
 
-    PENDING_REMOVAL_MAX_CHECKS = 10
+    PENDING_REMOVAL_MAX_CHECKS = 20
     PENDING_REMOVAL_CHECK_INTERVAL = 30
 
     snyk_token = getenv("SNYK_TOKEN")
