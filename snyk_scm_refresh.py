@@ -17,6 +17,12 @@ from app.utils.github_utils import (
     get_gh_repo_status,
 )
 
+from app.utils.snyk_helper import (
+    unique_import_jobs_from_status_checks,
+    unique_repos_from_snyk_projects,
+    get_snyk_projects_from_github_repo
+)
+
 def parse_command_line_args():
     """Parse command-line arguments"""
 
@@ -46,20 +52,13 @@ def parse_command_line_args():
 def delete_snyk_project(project_id, org_id):
     """Delete a single Snyk project"""
 
+    org = snyk_client.organizations.get(org_id)
+
     try:
-        org = snyk_client.organizations.get(org_id)
         project = org.projects.get(project_id)
         return project.delete()
     except snyk.errors.SnykNotFoundError:
-        print("    - Error retrieving project %s in org %s ..." % (project_id, org_id))
-        return False
-    except Exception:
-        print(
-            "    - Generic exception trying to delete project %s in org %s ..." % (
-                project_id,
-                org_id
-            )
-        )
+        print("    - Project %s not found in org %s ..." % (project_id, org_id))
         return False
 
 def delete_stale_manifests(snyk_repo_projects):
@@ -83,112 +82,105 @@ def delete_stale_manifests(snyk_repo_projects):
             sys.stdout.flush()
             delete_snyk_project(snyk_repo_project["id"], snyk_repo_project["org_id"])
             STALE_MANIFESTS_DELETED_FILE.write(
-                "%s,%s,%s\n"
+                "%s,%s\n"
                 % (
-                    snyk_repo_project["name"],
-                    snyk_repo_project["id"],
-                    snyk_repo_project["org_id"],
+                    snyk_repo_project["org_name"],
+                    snyk_repo_project["name"]
                 )
             )
             print("Done")
             if not dry_run:
                 time.sleep(2)
 
-def delete_renamed_repo_projects(import_status_checks):
+def process_import_status_checks(import_status_checks, deletes_pending_on_import):
     """
     Check status of pending import jobs
     up to PENDING_REMOVAL_MAX_CHECKS times,
     waiting PENDING_REMOVAL_CHECK_INTERVAL seconds between checks
     """
     check_count = 0
+    import_status_processed = []
 
-    print("Checking on renamed project imports before removing %d old ones."
-          % len(import_status_checks))
-    print(
-        "Polling results for up to %d mintues..." % (
-            (PENDING_REMOVAL_MAX_CHECKS * PENDING_REMOVAL_CHECK_INTERVAL)/60))
+    print("Checking import statuses, polling for up to %s minutes..."
+          % str((PENDING_REMOVAL_MAX_CHECKS * PENDING_REMOVAL_CHECK_INTERVAL)/60))
+
     while check_count < PENDING_REMOVAL_MAX_CHECKS:
-        # list to track which checks to remove as we go
-        checks_to_pop = []
         # get unique jobs from import results
-        unique_import_jobs = []
-        for import_status_check in import_status_checks:
-            if import_status_check["job_id"] not in {u["job_id"] for u in unique_import_jobs}:
-                unique_import_jobs.append(
-                    {
-                        "job_id": import_status_check["job_id"],
-                        "import_status_url": import_status_check["import_status_url"],
-                        "org_id": import_status_check["org_id"]
-                    }
-                )
+        unique_import_jobs = unique_import_jobs_from_status_checks(import_status_checks)
 
-        # for each unique import job
-        # 1. check the status of each nested log entry (repo import), and
-        # 2. delete the corresponding stale projects under the old repo name
-
+        # check each import job statuses
         for import_job in unique_import_jobs:
             import_status = get_import_status(
                 import_job["import_status_url"], import_job["org_id"]
             )
+            # process each individual repo import
             for import_status_log in import_status["logs"]:
-                check_index = 0
-                for import_status_check in import_status_checks:
-                    import_status_check_full_name = \
-                        import_status_check["owner"] + '/' + import_status_check["name"]
-                    if import_status_log["name"] == import_status_check_full_name:
-                        print("[%s] Import status [%s] - %s" % (
-                            import_job["job_id"],
-                            import_status_log["name"],
-                            import_status_log["status"]
-                        ))
-                        if import_status_log["status"] == "complete":
-                            if not dry_run:
-                                print(
-                                    "  - [%s/%s] Removing project under old name - %s" %
-                                    (
-                                        import_status_check["owner"],
-                                        import_status_check["name"],
-                                        import_status_check["stale_project_id"])
-                                )
-                                if delete_snyk_project(
-                                        import_status_check["stale_project_id"],
-                                        import_status_check["org_id"]
-                                    ):
-                                    RENAMED_MANIFESTS_DELETED_FILE.write(
-                                        "%s/%s:%s" % (
-                                            import_status_check["owner"],
-                                            import_status_check["name"],
-                                            import_status_check["stale_project_id"]
-                                        )
+                if import_status_log["name"] not in import_status_processed:
+                    print("  - [%s] Import status: %s" % (
+                        import_status_log["name"], import_status_log["status"]
+                    ))
+                    # if repo import status is complete, log
+                    # and delete any pending waiting on this repo import
+                    if import_status_log["status"] == "complete":
+                        for project in import_status_log["projects"]:
+                            COMPLETED_PROJECT_IMPORTS_FILE.write("%s,%s:%s,%s\n" % (
+                                import_job["org_id"],
+                                import_status_log["name"],
+                                project["targetFile"],
+                                project["success"]
+                            ))
+
+                        if len(deletes_pending_on_import) > 0:
+                            for pending_delete in deletes_pending_on_import[0]:
+                                if pending_delete["new_repo"] == import_status_log["name"]:
+                                    print("delete pending projects here %s:%s:%s" % (
+                                        pending_delete["pending_org_id"],
+                                        pending_delete["old_repo"],
+                                        pending_delete["pending_manifest"]
+                                    ))
+
+                                    delete_snyk_project(
+                                        pending_delete["pending_project_id"],
+                                        pending_delete["pending_org_id"]
                                     )
-                                checks_to_pop.append(import_status_check)
-                    check_index += 1
-            # remove entry from import_status_check
-            for check_to_pop in checks_to_pop:
-                import_status_checks.remove(check_to_pop)
-            if len(import_status_checks) == 0:
-                print("None Pending, Done.")
-                return
-            else:
-                print("%s now pending removal" % len(import_status_checks))
+
+                                    RENAMED_MANIFESTS_DELETED_FILE.write("%s,%s:%s\n" % (
+                                        pending_delete["pending_org_id"],
+                                        pending_delete["old_repo"],
+                                        pending_delete["pending_manifest"]
+                                    ))
+                        # track which repo import jobs have been processed
+                        import_status_processed.append(import_status_log["name"])
+
+        if len(import_status_checks) == len(import_status_processed):
+            print("None Pending, Done.\n")
+            return
+        else:
+            sys.stdout.write("%s now pending" % (
+                len(import_status_checks) - len(import_status_processed)
+            ))
+            sys.stdout.flush()
+
         check_count += 1
         if check_count == PENDING_REMOVAL_MAX_CHECKS:
             print(
-                "Exiting with %d pending removals, logging to %s ..." % (
-                    len(import_status_checks),
-                    RENAMED_MANIFESTS_PENDING_FILE
+                "\nExiting with %d pending removals, logging...\n" % (
+                    len(import_status_checks) - len(import_status_processed)
                 )
             )
             for import_status_check in import_status_checks:
-                RENAMED_MANIFESTS_PENDING_FILE.write(
-                    "%s/%s:%s" % (
-                        import_status_check["owner"],
-                        import_status_check["name"],
-                        import_status_check["stale_project_id"]
+                if import_status_check["owner"] + '/' + import_status_check["name"] \
+                    not in import_status_processed:
+                    RENAMED_MANIFESTS_PENDING_FILE.write(
+                        "%s,%s/%s\n" % (
+                            import_status_check["org_name"],
+                            import_status_check["owner"],
+                            import_status_check["name"]
+                        )
                     )
-                )
+            return
         else:
-            print("Checking back in 30 seconds...")
+            print(", Checking back in %d seconds..." % PENDING_REMOVAL_CHECK_INTERVAL)
         time.sleep(PENDING_REMOVAL_CHECK_INTERVAL)
 
 def get_import_status(import_status_url, org_id):
@@ -211,10 +203,17 @@ def import_github_repo(org_id, owner, name):
     payload = {
         "target": {"owner": owner, "name": name, "branch": ""}
     }
-    response = org.client.post(path, payload)
+    try:
+        response = org.client.post(path, payload)
+    except snyk.errors.SnykHTTPError as err:
+        if err.code == 502:
+            print("We've been asked to wait, lets try again in a minute...")
+            time.sleep(60)
+            response = org.client.post(path, payload)
 
     return {
         "org_id": org.id,
+        "org_name": org.name,
         "owner": owner,
         "name": name,
         "job_id": re.search('org/.+/integrations/.+/import/(.+)', \
@@ -268,134 +267,80 @@ def build_snyk_project_list(snyk_orgs):
                 )
     return snyk_gh_projects
 
-def build_unique_repos(snyk_gh_projects):
-    """Build list of unique repositories from a given list of Snyk projects"""
-    snyk_gh_repos = []
-    for project in snyk_gh_projects:
-        if project["repo_full_name"] not in {s["full_name"] for s in snyk_gh_repos}:
-            snyk_gh_repos.append(
-                {
-                    "full_name": project["repo_full_name"],
-                    "owner": project["repo_owner"],
-                    "name": project["repo_name"],
-                    "org_id": project["org_id"],
-                    "org_name": project["org_name"],
-                    "gh_integration_id": project["gh_integration_id"],
-                    "branch_from_name": project["branch_from_name"],
-                }
-            )
-    return snyk_gh_repos
+def log_potential_delete(org_name, repo_name):
+    """ Log potential repo deletion """
+    print("  - [%s] Logging potential delete" % repo_name)
+    POTENTIAL_DELETES_FILE.write("%s,%s\n" % (org_name, repo_name))
 
-def get_snyk_projects_from_github_repo(snyk_gh_repo, snyk_gh_projects):
-    snyk_repo_projects = list(
-        filter(
-            lambda x: x["repo_full_name"] == snyk_gh_repo["full_name"],
-            snyk_gh_projects,
-        )
-    )
+def process_snyk_projects_and_get_check_data(snyk_repo_projects, snyk_gh_repo):
+    """
+    Check if existing manifests still exist
+    Re-import existing repos to pick up any files
+    Detect repos that no longer exist
+    if a repo has been renamed, bring in the new one and delete the old
+    """
 
-    return  snyk_repo_projects
-
-def sync_existing_snyk_project(snyk_gh_repo, snyk_repo_projects):
-    # remove any manifests that no longer exist at the github repo before re-importing
-
-    if not dry_run:
-        print(
-            "  - [%s] Checking (%d) for stale manifests"
-            % (snyk_gh_repo["full_name"], len(snyk_repo_projects))
-        )
-        delete_stale_manifests(snyk_repo_projects)
-
-        # then, import with existing name to catch any new manifests
-        print(
-            "  - [%s] Adding any new manifests via Import"
-            % snyk_gh_repo["full_name"]
-        )
-
-        import_github_repo(
-            snyk_gh_repo["org_id"], snyk_gh_repo["owner"], snyk_gh_repo["name"]
-        )
-
-    else:
-
-        print(
-            "  - [%s] Checking (%d) for stale manifests, not deleting because dry run"
-            % (snyk_gh_repo["full_name"], len(snyk_repo_projects))
-        )
-
-        print(
-            "  - [%s] Would add any new manifests via Import, not adding because of dry run"
-            % snyk_gh_repo["full_name"]
-        )
-
-def sync_renamed_snyk_project_and_get_import_statuses(gh_repo_status, snyk_repo_projects, import_status_checks):
-    # import with new name to catch any new manifests and fix broken PR status checks
-    print("  - [%s] Snyk import job submitted" % gh_repo_status["gh_name"])
-    if not dry_run:
-        import_response = import_github_repo(
-            gh_repo_status["snyk_org_id"],
-            gh_repo_status["gh_owner"],
-            gh_repo_status["gh_name"],
-        )
-
-    print(
-        "  - [%s] Import status check queued, old project removals pending..."
-        % gh_repo_status["gh_name"]
-    )
-    # build list of projects associated to a renamed repo, to remove later
-    if not dry_run:
-        for snyk_repo_project in snyk_repo_projects:
-            print(
-                "        %s [%s]" % (
-                    snyk_repo_project["name"],
-                    snyk_repo_project["id"]
-                )
-            )
-            status_check = import_response.copy()
-            status_check.update({"stale_project_id": snyk_repo_project["id"]})
-            import_status_checks.append(status_check)
-
-    return import_status_checks
-
-def process_snyk_project_and_get_import_statuses(snyk_repo_projects, snyk_gh_repo, import_status_checks):
+    _import_response = []
+    _deletes_pending_on_import = []
 
     try:
         gh_repo_status = get_gh_repo_status(snyk_gh_repo, github_token)
     except RuntimeError as err:
         raise RuntimeError("Failed to query GitHub repository!") from err
 
-    print(
-        "Snyk Org: %s | Snyk name: %s" % (
-            snyk_gh_repo["org_name"],
-            snyk_gh_repo["full_name"],
-        )
-    )
-    print(
-        "  - [%s] GitHub Status: %s [%s]" % (
-            snyk_gh_repo["full_name"],
-            gh_repo_status["response_code"],
-            gh_repo_status["response_message"]
-        )
-    )
+    print("Snyk Org: %s | Snyk name: %s" % (
+        snyk_gh_repo["org_name"],
+        snyk_gh_repo["full_name"]
+    ))
 
-    # project no longer exists
-    if gh_repo_status["response_code"] == 404:
-        # potential deletes, output to file for review
-        print("  - [%s] Logging potential delete" % snyk_gh_repo["full_name"])
-        POTENTIAL_DELETES_FILE.write("%s,%s\n" % (snyk_gh_repo["org_name"], snyk_gh_repo["full_name"]))
+    print("  - [%s] GitHub Status: %s [%s]" % (
+        snyk_gh_repo["full_name"],
+        gh_repo_status["response_code"],
+        gh_repo_status["response_message"]
+    ))
 
-    # project not renamed/moved
-    elif gh_repo_status["response_code"] == 200:
-        sync_existing_snyk_project(snyk_gh_repo, snyk_repo_projects)
+    if gh_repo_status["response_code"] == 404: # project no longer exists
+        log_potential_delete(snyk_gh_repo["org_name"], snyk_gh_repo["full_name"])
 
+    elif gh_repo_status["response_code"] == 200: # project has not been renamed
+        print("  - [%s] Checking %d projects for any stale manifests"% (
+            snyk_gh_repo["full_name"], len(snyk_repo_projects)
+        ))
 
-    # project has moved/been renamed
-    elif gh_repo_status["response_code"] == 301:
-        import_statuses = sync_renamed_snyk_project_and_get_import_statuses(gh_repo_status, snyk_repo_projects, import_status_checks)
+        if not dry_run:
+            delete_stale_manifests(snyk_repo_projects)
 
-        return import_statuses
+        print("  - [%s] Adding any new manifests via Import" % snyk_gh_repo["full_name"])
 
-    return []
+        if not dry_run:
+            _import_response = import_github_repo(
+                snyk_gh_repo["org_id"], snyk_gh_repo["owner"], snyk_gh_repo["name"]
+            )
+
+    elif gh_repo_status["response_code"] == 301: # project has been renamed
+        print("  - [%s] Adding any new manifests via Import" % snyk_gh_repo["full_name"])
+
+        if not dry_run:
+            _import_response = import_github_repo(
+                snyk_gh_repo["org_id"], gh_repo_status["gh_owner"], gh_repo_status["gh_name"]
+            )
+
+            print("  - [%s] Removals pending renamed repo import..." %snyk_gh_repo["full_name"])
+
+            for snyk_repo_project in snyk_repo_projects:
+                print("     - %s:%s" % (
+                    snyk_repo_project["repo_full_name"], snyk_repo_project["manifest"]
+                ))
+                _deletes_pending_on_import.append(
+                    {
+                        "old_repo": snyk_gh_repo["full_name"],
+                        "new_repo": gh_repo_status["gh_owner"] + '/' + gh_repo_status["gh_name"],
+                        "pending_project_id": snyk_repo_project["id"],
+                        "pending_manifest": snyk_repo_project["manifest"],
+                        "pending_org_id": snyk_repo_project["org_id"]
+                    })
+
+    return (_import_response, _deletes_pending_on_import)
 
 def main():
     """Main"""
@@ -406,40 +351,48 @@ def main():
 
     snyk_orgs = []
     import_status_checks = []
+    deletes_pending_on_import = []
 
     # if --orgId exists, use it
     # otherwise get all orgs the api user is part of
-    if org_id_filter:
-        snyk_orgs.append(snyk_client.organizations.get(org_id_filter))
-    else:
-        snyk_orgs = snyk_client.organizations.all()
+    try:
+        if org_id_filter:
+            snyk_orgs.append(snyk_client.organizations.get(org_id_filter))
+        else:
+            snyk_orgs = snyk_client.organizations.all()
+    except snyk.errors.SnykHTTPError as err:
+        print("\n\n%s, exiting...\n" % err.message)
+        sys.exit(1)
 
     # build complete Snyk project list
     snyk_gh_projects = build_snyk_project_list(snyk_orgs)
     sys.stdout.write("%d" % len(snyk_gh_projects))
 
     # build unique repos in Snyk from project list
-    snyk_gh_repos = build_unique_repos(snyk_gh_projects)
-    sys.stdout.write(" [%d Unique repos]\n" % len(snyk_gh_repos))
+    snyk_gh_repos = unique_repos_from_snyk_projects(snyk_gh_projects)
+    num_snyk_gh_repos = len(snyk_gh_repos)
+    sys.stdout.write(" [%d Unique repos]\n" % num_snyk_gh_repos)
 
-    # clean up snyk projects
-    i = 1
-    for snyk_gh_repo in snyk_gh_repos:
+    # process snyk projects and get import check data
+    for (i, snyk_gh_repo) in enumerate(snyk_gh_repos):
 
-        print(f"Processing project {str(i)}/{str(len(snyk_gh_repos))}")
+        print(f"Processing repo {str(i+1)}/{str(num_snyk_gh_repos)}")
 
         snyk_repo_projects = get_snyk_projects_from_github_repo(snyk_gh_repo, snyk_gh_projects)
 
-        import_status_checks = process_snyk_project_and_get_import_statuses(snyk_repo_projects, snyk_gh_repo, import_status_checks)
+        (import_response, pending_delete) = process_snyk_projects_and_get_check_data(snyk_repo_projects, snyk_gh_repo)
+        if len(import_response) > 0:
+            import_status_checks.append(import_response)
+        if len(pending_delete) > 0:
+            deletes_pending_on_import.append(pending_delete)
 
         if not dry_run:
             time.sleep(5)
-        i += 1
 
-    # remove renamed repo projects
+    # process import status checks
     if not dry_run:
         if len(import_status_checks) > 0:
-            delete_renamed_repo_projects(import_status_checks)
+            process_import_status_checks(import_status_checks, deletes_pending_on_import)
 
 
 if __name__ == "__main__":
@@ -456,8 +409,8 @@ if __name__ == "__main__":
     LOG_FILENAME = LOG_PREFIX + ".log"
     logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG, filemode="w")
 
-    PENDING_REMOVAL_MAX_CHECKS = 20
-    PENDING_REMOVAL_CHECK_INTERVAL = 30
+    PENDING_REMOVAL_MAX_CHECKS = 45
+    PENDING_REMOVAL_CHECK_INTERVAL = 20
 
     snyk_token = getenv("SNYK_TOKEN")
     github_token = getenv("GITHUB_TOKEN")
@@ -468,15 +421,28 @@ if __name__ == "__main__":
 
     snyk_client = SnykClient(snyk_token)
 
-    POTENTIAL_DELETES_FILE = open("%s_potential-deletes.csv" % LOG_PREFIX, "w")
+    POTENTIAL_DELETES_FILE = open("%s_potential-repo-deletes.csv" % LOG_PREFIX, "w")
+    POTENTIAL_DELETES_FILE.write("org,repo\n")
+
     STALE_MANIFESTS_DELETED_FILE = open(
         "%s_stale-manifests-deleted.csv" % LOG_PREFIX, "w"
     )
+    STALE_MANIFESTS_DELETED_FILE.write("org,project\n")
+
     RENAMED_MANIFESTS_DELETED_FILE = open(
         "%s_renamed-manifests-deleted.csv" % LOG_PREFIX, "w"
     )
+    RENAMED_MANIFESTS_DELETED_FILE.write("org,project\n")
+
     RENAMED_MANIFESTS_PENDING_FILE = open(
         "%s_renamed-manifests-pending.csv" % LOG_PREFIX, "w"
     )
+    RENAMED_MANIFESTS_PENDING_FILE.write("org,project\n")
+
+    COMPLETED_PROJECT_IMPORTS_FILE = open(
+        "%s_completed-project-imports.csv" % LOG_PREFIX, "w"
+    )
+    COMPLETED_PROJECT_IMPORTS_FILE.write("org,project,success\n")
+
 
     main()
