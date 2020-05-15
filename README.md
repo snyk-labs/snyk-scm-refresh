@@ -32,11 +32,16 @@ optional arguments:
 ```
 
 Each run generates a set of output files:
-  - _potential-repo-deletes.csv | repo no longer exists
-  - _stale-manifests-deleted.csv | monitored manifest files no longer exists
-  - _renamed-manifests-deleted.csv | manifests of renamed repos that were removed
-  - _renamed-manifests-pending.csv | manifests of renamed repos that were not removed. Only when the import of the repo under the new name is copmpleted are the old ones removed.
-  - _completed-project-imports.csv | manifests that were imported during this job run
+  - _potential-repo-deletes.csv
+     - repo no longer exists
+  - _stale-manifests-deleted.csv
+     - monitored manifest files no longer exists
+  - _renamed-manifests-deleted.csv
+     - manifests of renamed repos that were removed
+  - _renamed-manifests-pending.csv
+     - manifests of renamed repos that were not removed. Only when the import of the repo under the new name is copmpleted are the old ones removed.
+  - _completed-project-imports.csv
+     - manifests that were imported during this job run
 
 ## Dependencies
 pysnyk, PyGithub, requests
@@ -62,6 +67,7 @@ If unsure, try one org at a time with --org-id
 
 
 **Recommended:** This tool will delete projects from Snyk that are detected as stale or have since been renamed
-  Use the --dry-run option to verify the execution plan for the first run
+  
+Use the --dry-run option to verify the execution plan for the first run
 
   
