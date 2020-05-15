@@ -32,6 +32,8 @@ optional arguments:
 ```
 
 Each run generates a set of output files:
+  - snyk-scm-refresh.log
+     - debug log output good for troubleshooting
   - _potential-repo-deletes.csv
      - repo no longer exists
   - _stale-manifests-deleted.csv
