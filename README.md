@@ -16,6 +16,28 @@ For repos with at least 1 project already in Snyk:
 - Using a brokered Github.com Integration
 - Using an SCM other than Github.com
 
+### Usage
+```
+usage: snyk-scm-refresh.py [-h] [--org-id=ORG_ID] [--project-id=PROJECT_ID]
+                        [--dry-run]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --org-id ORG_ID       The Snyk Organisation Id. If omitted, process all orgs
+                        the Snyk user has access to.
+  --project-id PROJECT_ID
+                        The Snyk Project Id. if omitted, process all projects.
+  --dry-run             Simulate processing of the script without making
+                        changes to Snyk
+```
+
+Each run generates a set of output files:
+  - _potential-repo-deletes.csv | repo no longer exists
+  - _stale-manifests-deleted.csv | monitored manifest files no longer exists
+  - _renamed-manifests-deleted.csv | manifests of renamed repos that were removed
+  - _renamed-manifests-pending.csv | manifests of renamed repos that were not removed. Only when the import of the repo under the new name is copmpleted are the old ones removed.
+  - _completed-project-imports.csv | manifests that were imported during this job run
+
 ## Dependencies
 pysnyk, PyGithub, requests
 
@@ -42,27 +64,4 @@ If unsure, try one org at a time with --org-id
 **Recommended:** This tool will delete projects from Snyk that are detected as stale or have since been renamed
   Use the --dry-run option to verify the execution plan for the first run
 
-### Usage
-```
-usage: snyk-scm-refresh.py [-h] [--org-id=ORG_ID] [--project-id=PROJECT_ID]
-                        [--dry-run]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --org-id ORG_ID       The Snyk Organisation Id. If omitted, process all orgs
-                        the Snyk user has access to.
-  --project-id PROJECT_ID
-                        The Snyk Project Id. if omitted, process all projects.
-  --dry-run             Simulate processing of the script without making
-                        changes to Snyk
-```
-
-Each run generates additional output files:
-  - _potential-deletes.csv
-  - _stale-manifests-deleted.csv
-  - _renamed-manifests-deleted.csv
-  - _renamed_manifests-pending.csv
   
-
-## TODO
-- additional tests
