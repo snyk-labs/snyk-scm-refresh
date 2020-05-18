@@ -20,11 +20,20 @@ jobs:
           fail-on-issues: true
           monitor-on-build: false
           token-variable: SNYK_TOKEN
-  monitor:
+  build-test-monitor:
     docker:
       - image: circleci/python:3.7.2
     steps:
       - checkout
+      - run:
+          name: "Install Dependencies"
+          command: 'pip install -r requirements.txt --user'
+      - run:
+          name: "Install Dev Dependencies"
+          command: 'pip install -r requirements-dev.txt --user'
+      - run:
+          name: "Test"
+          command: '$HOME/.local/bin/pytest -v'
       - snyk/scan:
           fail-on-issues: true
           monitor-on-build: true
@@ -42,16 +51,8 @@ workflows:
               only:
                 - master
     jobs:
-      - build-test:
+      - build-test-monitor:
           context: SNYK
-          filters:
-            branches:
-              only: 
-                - master
-      - monitor:
-          context: SNYK
-          requires:
-            - build-test
           filters:
             branches:
               only: 
