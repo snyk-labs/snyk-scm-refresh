@@ -206,10 +206,14 @@ def import_github_repo(org_id, owner, name):
     try:
         response = org.client.post(path, payload)
     except snyk.errors.SnykHTTPError as err:
-        if err.code == 502:
-            print("We've been asked to wait, lets try again in a minute...")
+        if err.code in [502,504]:
+            print("Server error, lets try again in a minute...")
             time.sleep(60)
-            response = org.client.post(path, payload)
+           try:
+               response = org.client.post(path, payload)
+           except snyk.errors.SnykHTTPError as e:
+               print(f"Still failed after retry with {str(e.code)}!")
+               raise           
 
     return {
         "org_id": org.id,
@@ -272,7 +276,7 @@ def log_potential_delete(org_name, repo_name):
     print("  - [%s] Logging potential delete" % repo_name)
     POTENTIAL_DELETES_FILE.write("%s,%s\n" % (org_name, repo_name))
 
-def process_snyk_projects_and_get_check_data(snyk_repo_projects, snyk_gh_repo):
+def process_snyk_repo_projects_and_get_check_data(snyk_repo_projects, snyk_gh_repo):
     """
     Check if existing manifests still exist
     Re-import existing repos to pick up any files
@@ -342,6 +346,36 @@ def process_snyk_projects_and_get_check_data(snyk_repo_projects, snyk_gh_repo):
 
     return (_import_response, _deletes_pending_on_import)
 
+def process_snyk_repos(snyk_gh_projects, snyk_gh_repos):
+    _import_status_checks = []
+    _deletes_pending_on_import = []
+    # process snyk projects and get import check data
+    for (i, snyk_gh_repo) in enumerate(snyk_gh_repos):
+
+        print(f"Processing repo {str(i+1)}/{str(len(snyk_gh_repos))}")
+
+        snyk_repo_projects = get_snyk_projects_from_github_repo(snyk_gh_repo, snyk_gh_projects)
+
+        try:
+            (import_response, pending_delete) = process_snyk_repo_projects_and_get_check_data(snyk_repo_projects, snyk_gh_repo)
+        except (snyk.errors.SnykHTTPError, snyk.errors.SnykNotFoundError) as err:
+            print("  - [%s] Import error: %s, skipping" % (snyk_gh_repo["repo_full_name"], err.message))
+            #log this
+            REPOS_SKIPPED_ON_ERROR_FILE.write("%s,%s,%s\n" % (
+                snyk_gh_repo["org_name"],
+                snyk_gh_repo["repo_full_name"],
+                err.message 
+            ))
+            continue # on error, break out of this for loop and process the next repo
+        if len(import_response) > 0:
+            _import_status_checks.append(import_response)
+        if len(pending_delete) > 0:
+            _deletes_pending_on_import.append(pending_delete)
+        if not dry_run:
+            time.sleep(5)
+
+    return (_import_status_checks, _deletes_pending_on_import)
+
 def main():
     """Main"""
 
@@ -370,30 +404,14 @@ def main():
 
     # build unique repos in Snyk from project list
     snyk_gh_repos = unique_repos_from_snyk_projects(snyk_gh_projects)
-    num_snyk_gh_repos = len(snyk_gh_repos)
-    sys.stdout.write(" [%d Unique repos]\n" % num_snyk_gh_repos)
+    sys.stdout.write(" [%d Unique repos]\n" % len(snyk_gh_repos))
 
-    # process snyk projects and get import check data
-    for (i, snyk_gh_repo) in enumerate(snyk_gh_repos):
-
-        print(f"Processing repo {str(i+1)}/{str(num_snyk_gh_repos)}")
-
-        snyk_repo_projects = get_snyk_projects_from_github_repo(snyk_gh_repo, snyk_gh_projects)
-
-        (import_response, pending_delete) = process_snyk_projects_and_get_check_data(snyk_repo_projects, snyk_gh_repo)
-        if len(import_response) > 0:
-            import_status_checks.append(import_response)
-        if len(pending_delete) > 0:
-            deletes_pending_on_import.append(pending_delete)
-
-        if not dry_run:
-            time.sleep(5)
+    (import_status_checks, deletes_pending_on_import) = process_snyk_repos(snyk_gh_projects, snyk_gh_repos)
 
     # process import status checks
     if not dry_run:
         if len(import_status_checks) > 0:
             process_import_status_checks(import_status_checks, deletes_pending_on_import)
-
 
 if __name__ == "__main__":
     LOG_PREFIX = "snyk-scm-refresh"
@@ -444,5 +462,9 @@ if __name__ == "__main__":
     )
     COMPLETED_PROJECT_IMPORTS_FILE.write("org,project,success\n")
 
+    REPOS_SKIPPED_ON_ERROR_FILE = open(
+        "%s_repos-skipped-on-error.csv" % LOG_PREFIX, "w"
+    )
+    COMPLETED_PROJECT_IMPORTS_FILE.write("org,repo,status\n")
 
     main()
