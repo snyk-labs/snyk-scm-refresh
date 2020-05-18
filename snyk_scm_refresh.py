@@ -355,7 +355,7 @@ def process_snyk_repos(snyk_gh_projects, snyk_gh_repos):
         try:
             (import_response, pending_delete) = process_snyk_repo_projects_and_get_check_data(snyk_repo_projects, snyk_gh_repo)
         except (snyk.errors.SnykHTTPError, snyk.errors.SnykNotFoundError) as err:
-            print("  - [%s] Import error: %s, skipping" % (snyk_gh_repo["org_name"], err.message))
+            print("  - [%s] Import error: %s, skipping" % (snyk_gh_repo["repo_full_name"], err.message))
             #log this
             REPOS_SKIPPED_ON_ERROR_FILE.write("%s,%s,%s\n" % (
                 snyk_gh_repo["org_name"],
