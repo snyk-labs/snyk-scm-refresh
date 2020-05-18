@@ -362,7 +362,7 @@ def process_snyk_repos(snyk_gh_projects, snyk_gh_repos):
                 snyk_gh_repo["repo_full_name"],
                 err.message 
             ))
-            break # on error, break out of this for loop and process the next repo
+            continue # on error, break out of this for loop and process the next repo
         if len(import_response) > 0:
             _import_status_checks.append(import_response)
         if len(pending_delete) > 0:
