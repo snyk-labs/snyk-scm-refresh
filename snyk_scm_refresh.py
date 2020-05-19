@@ -465,6 +465,6 @@ if __name__ == "__main__":
     REPOS_SKIPPED_ON_ERROR_FILE = open(
         "%s_repos-skipped-on-error.csv" % LOG_PREFIX, "w"
     )
-    COMPLETED_PROJECT_IMPORTS_FILE.write("org,repo,status\n")
+    REPOS_SKIPPED_ON_ERROR_FILE.write("org,repo,status\n")
 
     main()
