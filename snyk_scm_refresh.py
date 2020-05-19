@@ -209,9 +209,9 @@ def import_github_repo(org_id, owner, name):
         if err.code in [502,504]:
             print("Server error, lets try again in a minute...")
             time.sleep(60)
-           try:
+            try:
                response = org.client.post(path, payload)
-           except snyk.errors.SnykHTTPError as e:
+            except snyk.errors.SnykHTTPError as e:
                print(f"Still failed after retry with {str(e.code)}!")
                raise           
 
