@@ -3,7 +3,6 @@
 
 Keeps Snyk projects in sync with their associated Github repos
 
-### Use cases:
 For repos with at least 1 project already in Snyk:
 - Detect new manifests
 - Remove projects for manifests that no longer exist
@@ -16,7 +15,7 @@ For repos with at least 1 project already in Snyk:
 - Using a brokered Github.com Integration
 - Using an SCM other than Github.com
 
-### Usage
+## Usage
 ```
 usage: ./snyk-scm-refresh.py [-h] [--org-id=ORG_ID] [--project-id=PROJECT_ID]
                         [--dry-run]
@@ -31,14 +30,7 @@ optional arguments:
                         changes to Snyk
 ```
 
-Each run generates a set of output files:
-| File Name | Description |
-| snyk-scm-refresh.log | debug log output good for troubleshooting |
-| _potential-repo-deletes.csv | repo no longer exists |
-| _stale-manifests-deleted.csv | monitored manifest files no longer exists |
-| _renamed-manifests-deleted.csv | manifests of renamed repos that were removed |
-| _renamed-manifests-pending.csv | manifests of renamed repos that were not removed. Only when the import of the repo under the new name is copmpleted are the old ones removed. |
-| _completed-project-imports.csv | manifests that were imported during this job run |
+
 
 ## Dependencies
 pysnyk, PyGithub, requests
@@ -63,8 +55,18 @@ Ensure that your GITHUB_TOKEN has access to the repos contained in the Snyk Orgs
 If unsure, try one org at a time with --org-id
 
 
-**Recommended:** This tool will delete projects from Snyk that are detected as stale or have since been renamed
+**Recommended:** 
+This tool will delete projects from Snyk that are detected as stale or have since been renamed
   
 Use the --dry-run option to verify the execution plan for the first run
 
-  
+  Each run generates a set of output files:
+| File Name           | Description |
+| ------------------- | ----------- |
+| snyk-scm-refresh.log | debug log output good for troubleshooting |
+| _potential-repo-deletes.csv | repo no longer exists |
+| _stale-manifests-deleted.csv | monitored manifest files no longer exists |
+| _renamed-manifests-deleted.csv | manifests of renamed repos that were removed |
+| _renamed-manifests-pending.csv | manifests of renamed repos that were not removed. Only when the import of the repo under the new name is copmpleted are the old ones removed. |
+| _completed-project-imports.csv | manifests that were imported during this job run |
+| _repos-skipped-on-error.csv | repos skipped due to import error |
