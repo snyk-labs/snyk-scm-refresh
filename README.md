@@ -5,20 +5,20 @@ Keeps Snyk projects in sync with their associated Github repos
 
 ### Use cases:
 For repos with at least 1 project already in Snyk:
-- Pick up new manifests
-- remove manifests that no longer exist
-- Detect repo name change and update (add new, remove old)
+- Detect new manifests
+- Remove projects for manifests that no longer exist
+- Update projects when a repo has been renamed 
 - Detect deleted repos and log for review
 
 **STOP NOW IF ANY OF THE FOLLOWING ARE TRUE**
-- You have .NET projects, re-import will break projects (PR status checks) due to target framework
-- If monitoring non-default branches
+- You have .NET projects, re-import will break projects (PR status checks) due to target framework setting
+- Monitoring non-default branches
 - Using a brokered Github.com Integration
 - Using an SCM other than Github.com
 
 ### Usage
 ```
-usage: snyk-scm-refresh.py [-h] [--org-id=ORG_ID] [--project-id=PROJECT_ID]
+usage: ./snyk-scm-refresh.py [-h] [--org-id=ORG_ID] [--project-id=PROJECT_ID]
                         [--dry-run]
 
 optional arguments:
@@ -32,18 +32,13 @@ optional arguments:
 ```
 
 Each run generates a set of output files:
-  - snyk-scm-refresh.log
-     - debug log output good for troubleshooting
-  - _potential-repo-deletes.csv
-     - repo no longer exists
-  - _stale-manifests-deleted.csv
-     - monitored manifest files no longer exists
-  - _renamed-manifests-deleted.csv
-     - manifests of renamed repos that were removed
-  - _renamed-manifests-pending.csv
-     - manifests of renamed repos that were not removed. Only when the import of the repo under the new name is copmpleted are the old ones removed.
-  - _completed-project-imports.csv
-     - manifests that were imported during this job run
+| File Name | Description |
+| snyk-scm-refresh.log | debug log output good for troubleshooting |
+| _potential-repo-deletes.csv | repo no longer exists |
+| _stale-manifests-deleted.csv | monitored manifest files no longer exists |
+| _renamed-manifests-deleted.csv | manifests of renamed repos that were removed |
+| _renamed-manifests-pending.csv | manifests of renamed repos that were not removed. Only when the import of the repo under the new name is copmpleted are the old ones removed. |
+| _completed-project-imports.csv | manifests that were imported during this job run |
 
 ## Dependencies
 pysnyk, PyGithub, requests
