@@ -133,7 +133,7 @@ def process_import_status_checks(import_status_checks, deletes_pending_on_import
                         if len(deletes_pending_on_import) > 0:
                             for pending_delete in deletes_pending_on_import[0]:
                                 if pending_delete["new_repo"] == import_status_log["name"]:
-                                    print("delete pending projects here %s:%s:%s" % (
+                                    print("delete pending project %s:%s:%s" % (
                                         pending_delete["pending_org_id"],
                                         pending_delete["old_repo"],
                                         pending_delete["pending_manifest"]
