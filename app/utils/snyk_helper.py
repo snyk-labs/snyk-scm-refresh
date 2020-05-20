@@ -6,7 +6,8 @@ def unique_import_jobs_from_status_checks(import_status_checks):
                 {
                     "job_id": import_status_check["job_id"],
                     "import_status_url": import_status_check["import_status_url"],
-                    "org_id": import_status_check["org_id"]
+                    "org_id": import_status_check["org_id"],
+                    "org_name": import_status_check["org_name"]
                 }
             )
     return unique_import_jobs

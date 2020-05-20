@@ -124,7 +124,7 @@ def process_import_status_checks(import_status_checks, deletes_pending_on_import
                     if import_status_log["status"] == "complete":
                         for project in import_status_log["projects"]:
                             COMPLETED_PROJECT_IMPORTS_FILE.write("%s,%s:%s,%s\n" % (
-                                import_job["org_id"],
+                                import_job["org_name"],
                                 import_status_log["name"],
                                 project["targetFile"],
                                 project["success"]
@@ -145,7 +145,7 @@ def process_import_status_checks(import_status_checks, deletes_pending_on_import
                                     )
 
                                     RENAMED_MANIFESTS_DELETED_FILE.write("%s,%s:%s\n" % (
-                                        pending_delete["pending_org_id"],
+                                        pending_delete["pending_org_name"],
                                         pending_delete["old_repo"],
                                         pending_delete["pending_manifest"]
                                     ))
@@ -341,7 +341,8 @@ def process_snyk_repo_projects_and_get_check_data(snyk_repo_projects, snyk_gh_re
                         "new_repo": gh_repo_status["gh_owner"] + '/' + gh_repo_status["gh_name"],
                         "pending_project_id": snyk_repo_project["id"],
                         "pending_manifest": snyk_repo_project["manifest"],
-                        "pending_org_id": snyk_repo_project["org_id"]
+                        "pending_org_id": snyk_repo_project["org_id"],
+                        "pending_org_name": snyk_repo_project["org_name"]
                     })
 
     return (_import_response, _deletes_pending_on_import)
