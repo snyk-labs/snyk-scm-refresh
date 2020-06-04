@@ -10,9 +10,7 @@ For repos with at least 1 project already in Snyk:
 - Detect deleted repos and log for review
 
 **STOP NOW IF ANY OF THE FOLLOWING ARE TRUE**
-- You have .NET projects, re-import will break projects (PR status checks) due to target framework setting
 - Monitoring non-default branches
-- Using a brokered Github.com Integration
 - Using an SCM other than Github.com
 
 ## Usage
