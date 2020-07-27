@@ -226,10 +226,9 @@ def import_github_repo(org_id, owner, name):
         "import_status_url": response.headers['Location']
     }
 
-def get_snyk_projects_for_repo(snyk_org, repo_full_name):
+def get_snyk_projects_for_repo(snyk_projects, repo_full_name):
     """Return snyk projects that belong to the specified repo only"""
     snyk_projects_filtered = []
-    snyk_projects = snyk_org.projects.all()
     
     for snyk_project in snyk_projects:
         # extract the repo part of the project name
@@ -254,10 +253,12 @@ def build_snyk_project_list(snyk_orgs):
                 % snyk_org.name
             )
             sys.exit(1)
+
+        snyk_projects = snyk_org.projects.all()
+
         if REPO_NAME_FILTER:
-            snyk_projects = get_snyk_projects_for_repo(snyk_org, REPO_NAME_FILTER)
-        else:
-            snyk_projects = snyk_org.projects.all()
+            snyk_projects = get_snyk_projects_for_repo(snyk_projects, REPO_NAME_FILTER)
+
         for project in snyk_projects:
             if project.origin == "github":
                 # snyk/goof(master):pom.xml or just snyk/goof:pom.xml
@@ -399,6 +400,7 @@ def main():
     """Main"""
 
     print("dry-run = %s" % DRY_RUN)
+    print("repo-name = %s" % REPO_NAME_FILTER)
     sys.stdout.write("Retrieving Snyk Projects...")
     sys.stdout.flush()
 
