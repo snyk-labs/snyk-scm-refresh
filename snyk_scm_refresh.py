@@ -89,7 +89,7 @@ def delete_stale_manifests(snyk_repo_projects):
                 )
             )
             print("Done")
-            if not dry_run:
+            if not DRY_RUN:
                 time.sleep(2)
 
 def process_import_status_checks(import_status_checks, deletes_pending_on_import):
@@ -206,14 +206,14 @@ def import_github_repo(org_id, owner, name):
     try:
         response = org.client.post(path, payload)
     except snyk.errors.SnykHTTPError as err:
-        if err.code in [502,504]:
+        if err.code in [502, 504]:
             print("Server error, lets try again in a minute...")
             time.sleep(60)
             try:
-               response = org.client.post(path, payload)
-            except snyk.errors.SnykHTTPError as e:
-               print(f"Still failed after retry with {str(e.code)}!")
-               raise           
+                response = org.client.post(path, payload)
+            except snyk.errors.SnykHTTPError as err_retry:
+                print(f"Still failed after retry with {str(err_retry.code)}!")
+                raise
 
     return {
         "org_id": org.id,
@@ -239,8 +239,8 @@ def build_snyk_project_list(snyk_orgs):
                 % snyk_org.name
             )
             sys.exit(1)
-        if project_id_filter:
-            snyk_projects.append(snyk_org.projects.get(project_id_filter))
+        if PROJECT_ID_FILTER:
+            snyk_projects.append(snyk_org.projects.get(PROJECT_ID_FILTER))
         else:
             snyk_projects = snyk_org.projects.all()
         for project in snyk_projects:
@@ -288,7 +288,7 @@ def process_snyk_repo_projects_and_get_check_data(snyk_repo_projects, snyk_gh_re
     _deletes_pending_on_import = []
 
     try:
-        gh_repo_status = get_gh_repo_status(snyk_gh_repo, github_token)
+        gh_repo_status = get_gh_repo_status(snyk_gh_repo, GITHUB_TOKEN)
     except RuntimeError as err:
         raise RuntimeError("Failed to query GitHub repository!") from err
 
@@ -311,12 +311,12 @@ def process_snyk_repo_projects_and_get_check_data(snyk_repo_projects, snyk_gh_re
             snyk_gh_repo["full_name"], len(snyk_repo_projects)
         ))
 
-        if not dry_run:
+        if not DRY_RUN:
             delete_stale_manifests(snyk_repo_projects)
 
         print("  - [%s] Adding any new manifests via Import" % snyk_gh_repo["full_name"])
 
-        if not dry_run:
+        if not DRY_RUN:
             _import_response = import_github_repo(
                 snyk_gh_repo["org_id"], snyk_gh_repo["owner"], snyk_gh_repo["name"]
             )
@@ -324,7 +324,7 @@ def process_snyk_repo_projects_and_get_check_data(snyk_repo_projects, snyk_gh_re
     elif gh_repo_status["response_code"] == 301: # project has been renamed
         print("  - [%s] Adding any new manifests via Import" % snyk_gh_repo["full_name"])
 
-        if not dry_run:
+        if not DRY_RUN:
             _import_response = import_github_repo(
                 snyk_gh_repo["org_id"], gh_repo_status["gh_owner"], gh_repo_status["gh_name"]
             )
@@ -348,6 +348,7 @@ def process_snyk_repo_projects_and_get_check_data(snyk_repo_projects, snyk_gh_re
     return (_import_response, _deletes_pending_on_import)
 
 def process_snyk_repos(snyk_gh_projects, snyk_gh_repos):
+    """Process snyk projects and get import check data"""
     _import_status_checks = []
     _deletes_pending_on_import = []
     # process snyk projects and get import check data
@@ -358,21 +359,23 @@ def process_snyk_repos(snyk_gh_projects, snyk_gh_repos):
         snyk_repo_projects = get_snyk_projects_from_github_repo(snyk_gh_repo, snyk_gh_projects)
 
         try:
-            (import_response, pending_delete) = process_snyk_repo_projects_and_get_check_data(snyk_repo_projects, snyk_gh_repo)
+            (import_response, pending_delete) = \
+                process_snyk_repo_projects_and_get_check_data(snyk_repo_projects, snyk_gh_repo)
         except (snyk.errors.SnykHTTPError, snyk.errors.SnykNotFoundError) as err:
-            print("  - [%s] Import error: %s, skipping" % (snyk_gh_repo["repo_full_name"], err.message))
+            print("  - [%s] Import error: %s, skipping" % \
+                (snyk_gh_repo["repo_full_name"], err.message))
             #log this
             REPOS_SKIPPED_ON_ERROR_FILE.write("%s,%s,%s\n" % (
                 snyk_gh_repo["org_name"],
                 snyk_gh_repo["repo_full_name"],
-                err.message 
+                err.message
             ))
             continue # on error, break out of this for loop and process the next repo
         if len(import_response) > 0:
             _import_status_checks.append(import_response)
         if len(pending_delete) > 0:
             _deletes_pending_on_import.append(pending_delete)
-        if not dry_run:
+        if not DRY_RUN:
             time.sleep(5)
 
     return (_import_status_checks, _deletes_pending_on_import)
@@ -380,7 +383,7 @@ def process_snyk_repos(snyk_gh_projects, snyk_gh_repos):
 def main():
     """Main"""
 
-    print("dry-run = %s" % dry_run)
+    print("dry-run = %s" % DRY_RUN)
     sys.stdout.write("Retrieving Snyk Projects...")
     sys.stdout.flush()
 
@@ -391,8 +394,8 @@ def main():
     # if --orgId exists, use it
     # otherwise get all orgs the api user is part of
     try:
-        if org_id_filter:
-            snyk_orgs.append(snyk_client.organizations.get(org_id_filter))
+        if ORG_ID_FILTER:
+            snyk_orgs.append(snyk_client.organizations.get(ORG_ID_FILTER))
         else:
             snyk_orgs = snyk_client.organizations.all()
     except snyk.errors.SnykHTTPError as err:
@@ -407,10 +410,11 @@ def main():
     snyk_gh_repos = unique_repos_from_snyk_projects(snyk_gh_projects)
     sys.stdout.write(" [%d Unique repos]\n" % len(snyk_gh_repos))
 
-    (import_status_checks, deletes_pending_on_import) = process_snyk_repos(snyk_gh_projects, snyk_gh_repos)
+    (import_status_checks, deletes_pending_on_import) = \
+        process_snyk_repos(snyk_gh_projects, snyk_gh_repos)
 
     # process import status checks
-    if not dry_run:
+    if not DRY_RUN:
         if len(import_status_checks) > 0:
             process_import_status_checks(import_status_checks, deletes_pending_on_import)
 
@@ -431,14 +435,14 @@ if __name__ == "__main__":
     PENDING_REMOVAL_MAX_CHECKS = 45
     PENDING_REMOVAL_CHECK_INTERVAL = 20
 
-    snyk_token = getenv("SNYK_TOKEN")
-    github_token = getenv("GITHUB_TOKEN")
-    args = parse_command_line_args()
-    org_id_filter = args.org_id
-    project_id_filter = args.project_id
-    dry_run = args.dry_run
+    SNYK_TOKEN = getenv("SNYK_TOKEN")
+    GITHUB_TOKEN = getenv("GITHUB_TOKEN")
+    ARGS = parse_command_line_args()
+    ORG_ID_FILTER = ARGS.org_id
+    PROJECT_ID_FILTER = ARGS.project_id
+    DRY_RUN = ARGS.DRY_RUN
 
-    snyk_client = SnykClient(snyk_token)
+    snyk_client = SnykClient(SNYK_TOKEN)
 
     POTENTIAL_DELETES_FILE = open("%s_potential-repo-deletes.csv" % LOG_PREFIX, "w")
     POTENTIAL_DELETES_FILE.write("org,repo\n")
