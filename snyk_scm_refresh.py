@@ -440,7 +440,7 @@ if __name__ == "__main__":
     ARGS = parse_command_line_args()
     ORG_ID_FILTER = ARGS.org_id
     PROJECT_ID_FILTER = ARGS.project_id
-    DRY_RUN = ARGS.DRY_RUN
+    DRY_RUN = ARGS.dry_run
 
     snyk_client = SnykClient(SNYK_TOKEN)
 
