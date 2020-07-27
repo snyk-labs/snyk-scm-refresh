@@ -35,9 +35,10 @@ def parse_command_line_args():
         required=False,
     )
     parser.add_argument(
-        "--project-id",
+        "--repo-name",
         type=str,
-        help="The Snyk Project Id found in Project > Settings. if omitted, process all projects.",
+        help="The full name of the repo to process (e.g. githubuser/githubrepo). \
+            If omitted, process all repos in the Snyk org.",
         required=False,
     )
     parser.add_argument(
@@ -225,6 +226,20 @@ def import_github_repo(org_id, owner, name):
         "import_status_url": response.headers['Location']
     }
 
+def get_snyk_projects_for_repo(snyk_org, repo_full_name):
+    """Return snyk projects that belong to the specified repo only"""
+    snyk_projects_filtered = []
+    snyk_projects = snyk_org.projects.all()
+    
+    for snyk_project in snyk_projects:
+        # extract the repo part of the project name
+        # e.g. scotte-snyk/demo-project:package.json should return
+        # 'scotte-snyk/demo-project'
+        if repo_full_name == snyk_project.name.split(":")[0]:
+            snyk_projects_filtered.append(snyk_project)
+    
+    return snyk_projects_filtered
+
 def build_snyk_project_list(snyk_orgs):
     """Build list of Snyk projects across all Snyk orgs in scope"""
     snyk_gh_projects = []
@@ -239,8 +254,8 @@ def build_snyk_project_list(snyk_orgs):
                 % snyk_org.name
             )
             sys.exit(1)
-        if PROJECT_ID_FILTER:
-            snyk_projects.append(snyk_org.projects.get(PROJECT_ID_FILTER))
+        if REPO_NAME_FILTER:
+            snyk_projects = get_snyk_projects_for_repo(snyk_org, REPO_NAME_FILTER)
         else:
             snyk_projects = snyk_org.projects.all()
         for project in snyk_projects:
@@ -439,7 +454,7 @@ if __name__ == "__main__":
     GITHUB_TOKEN = getenv("GITHUB_TOKEN")
     ARGS = parse_command_line_args()
     ORG_ID_FILTER = ARGS.org_id
-    PROJECT_ID_FILTER = ARGS.project_id
+    REPO_NAME_FILTER = ARGS.repo_name
     DRY_RUN = ARGS.dry_run
 
     snyk_client = SnykClient(SNYK_TOKEN)
