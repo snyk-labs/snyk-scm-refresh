@@ -15,15 +15,15 @@ For repos with at least 1 project already in Snyk:
 
 ## Usage
 ```
-usage: snyk_scm_refresh.py [-h] [--org-id ORG_ID] [--repo-name REPO_NAME]
+usage: snyk_scm_refresh.py [-h] [--org-id=ORG_ID] [--repo-name=REPO_NAME]
                            [--dry-run]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --org-id ORG_ID       The Snyk Organisation Id found in Organization >
+  --org-id=ORG_ID       The Snyk Organisation Id found in Organization >
                         Settings. If omitted, process all orgs the Snyk user
                         has access to.
-  --repo-name REPO_NAME
+  --repo-name=REPO_NAME
                         The full name of the repo to process (e.g.
                         githubuser/githubrepo). If omitted, process all repos
                         in the Snyk org.
