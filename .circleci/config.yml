@@ -57,3 +57,7 @@ workflows:
             branches:
               only: 
                 - master
+  build-test:
+    jobs:
+      - build-test:
+          context: SNYK
