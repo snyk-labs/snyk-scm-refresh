@@ -55,5 +55,8 @@ workflows:
           context: SNYK
           filters:
             branches:
-              ignore: 
+              only: 
                 - master
+  build-test:
+    jobs:
+      - build-test
