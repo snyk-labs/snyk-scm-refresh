@@ -1,6 +1,7 @@
 import pytest
+from snyk.models import Project
 
-from snyk_scm_refresh import get_gh_repo_status
+from snyk_scm_refresh import get_gh_repo_status, get_snyk_projects_for_repo
 
 
 class MockResponse:
@@ -11,14 +12,6 @@ class MockResponse:
     def json(self):
         response = {"full_name": "new_owner/new_repo"}
         return response
-
-
-@pytest.fixture(autouse=True)
-def no_requests(mocker):
-    mocker.patch("github.Github")
-    mocker.patch("snyk.SnykClient")
-    mocker.patch("requests.sessions.Session.request")
-
 
 @pytest.mark.parametrize(
     "status_code, response_message, repo, name, owner",
@@ -70,3 +63,57 @@ def test_get_gh_repo_status_unauthorized(mocker):
 
     with pytest.raises(RuntimeError):
         get_gh_repo_status(snyk_repo, "test_token")
+
+def test_get_snyk_project_for_repo():
+
+    class TestModels(object):
+    #@pytest.fixture
+        def organization(self):
+            org = Organization(
+                name="My Other Org", id="a04d9cbd-ae6e-44af-b573-0556b0ad4bd2"
+            )
+            org.client = SnykClient("token")
+            return org
+
+        def base_url(self):
+            return "https://snyk.io/api/v1"
+
+        def organization_url(self, base_url, organization):
+            return "%s/org/%s" % (base_url, organization.id)
+
+    snyk_projects = [
+        Project(name='scotte-snyk/test-project-1:package.json', 
+                organization=TestModels.organization, 
+                id='66d7ebef-9b36-464f-889c-b92c9ef5ce12', 
+                created='2020-07-27T20:09:02.150Z', 
+                origin='github', 
+                type='pip', 
+                readOnly=False, 
+                testFrequency='daily', 
+                totalDependencies=32, 
+                lastTestedDate='2020-07-28T07:15:24.981Z', 
+                browseUrl='https://app.snyk.io/org/scott.esbrandt-ww8/project/66d7ebef-9b36-464f-889c-b92c9ef5ce12', 
+                issueCountsBySeverity={"low": 8, "high": 13, "medium": 15}, 
+                imageTag='0.0.0', 
+                imageId=None
+        ), 
+        Project(name='scotte-snyk/test-project-2:requirements.txt', 
+                organization=TestModels.organization, 
+                id='93b82d1f-1544-45c9-b3bc-86e799c7225b', 
+                created='2020-07-27T20:08:44.903Z', 
+                origin='github', 
+                type='npm', 
+                readOnly=False, 
+                testFrequency='daily', 
+                totalDependencies=52, 
+                lastTestedDate='2020-07-28T01:09:27.480Z', 
+                browseUrl='https://app.snyk.io/org/scott.esbrandt-ww8/project/93b82d1f-1544-45c9-b3bc-86e799c7225b', 
+                issueCountsBySeverity={"low": 8, "high": 13, "medium": 15}, 
+                imageTag='1.0.0', 
+                imageId=None
+        )
+    ]  
+
+    snyk_projects_filtered = [snyk_projects[0]]
+
+    assert get_snyk_projects_for_repo(snyk_projects, "scotte-snyk/test-project-1") == snyk_projects_filtered

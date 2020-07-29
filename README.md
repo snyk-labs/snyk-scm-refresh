@@ -15,15 +15,18 @@ For repos with at least 1 project already in Snyk:
 
 ## Usage
 ```
-usage: ./snyk-scm-refresh.py [-h] [--org-id=ORG_ID] [--project-id=PROJECT_ID]
-                        [--dry-run]
+usage: snyk_scm_refresh.py [-h] [--org-id=ORG_ID] [--repo-name=REPO_NAME]
+                           [--dry-run]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --org-id ORG_ID       The Snyk Organisation Id. If omitted, process all orgs
-                        the Snyk user has access to.
-  --project-id PROJECT_ID
-                        The Snyk Project Id. if omitted, process all projects.
+  --org-id=ORG_ID       The Snyk Organisation Id found in Organization >
+                        Settings. If omitted, process all orgs the Snyk user
+                        has access to.
+  --repo-name=REPO_NAME
+                        The full name of the repo to process (e.g.
+                        githubuser/githubrepo). If omitted, process all repos
+                        in the Snyk org.
   --dry-run             Simulate processing of the script without making
                         changes to Snyk
 ```
@@ -50,13 +53,13 @@ export GITHUB_TOKEN=<github-token>
 Make sure to use a user *API Token* that has acess to the Snyk Orgs you need to process with the script.  A service account will *not* work for GitHub, which is the only SCM currently supported at this time.
 
 Ensure that your GITHUB_TOKEN has access to the repos contained in the Snyk Orgs in scope
-If unsure, try one org at a time with --org-id
+If unsure, try one org at a time with `--org-id`
 
 
 **Recommended:** 
 This tool will delete projects from Snyk that are detected as stale or have since been renamed
   
-Use the --dry-run option to verify the execution plan for the first run
+Use the `--dry-run` option to verify the execution plan for the first run
 
   Each run generates a set of output files:
 | File Name           | Description |
