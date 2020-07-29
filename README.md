@@ -1,5 +1,5 @@
 # snyk-scm-refresh
-[![Known Vulnerabilities](https://snyk.io/test/github/snyk-tech-services/snyk-scm-refresh/badge.svg)](https://snyk.io/test/github/snyk-tech-services/snyk-scm-refresh)
+[![Known Vulnerabilities](https://snyk.io/test/github/snyk-tech-services/snyk-scm-refresh/badge.svg)](https://snyk.io/test/github/snyk-tech-services/snyk-scm-refresh) [![circleci](https://circleci.com/gh/snyk-tech-services/snyk-scm-refresh.svg?style=svg)](https://circleci.com/gh/snyk-tech-services/snyk-scm-refresh)
 
 Keeps Snyk projects in sync with their associated Github repos
 
