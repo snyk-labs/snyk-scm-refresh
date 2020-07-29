@@ -229,14 +229,16 @@ def import_github_repo(org_id, owner, name):
 def get_snyk_projects_for_repo(snyk_projects, repo_full_name):
     """Return snyk projects that belong to the specified repo only"""
     snyk_projects_filtered = []
-    
+
     for snyk_project in snyk_projects:
         # extract the repo part of the project name
         # e.g. scotte-snyk/demo-project:package.json should return
         # 'scotte-snyk/demo-project'
         if repo_full_name == snyk_project.name.split(":")[0]:
             snyk_projects_filtered.append(snyk_project)
-    
+
+    #print("projects object")
+    #print(snyk_projects_filtered)
     return snyk_projects_filtered
 
 def build_snyk_project_list(snyk_orgs):
