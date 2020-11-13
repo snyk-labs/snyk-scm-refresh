@@ -15,7 +15,10 @@ jobs:
           command: 'pip install -r requirements-dev.txt --user'
       - run:
           name: "Test"
-          command: '$HOME/.local/bin/pytest -v'
+          command: '$HOME/.local/bin/pytest'
+      - run:
+          name: "Lint"
+          command: '$HOME/.local/bin/pylint app --ignore-patterns=test_'
       - snyk/scan:
           fail-on-issues: true
           monitor-on-build: false
@@ -33,7 +36,10 @@ jobs:
           command: 'pip install -r requirements-dev.txt --user'
       - run:
           name: "Test"
-          command: '$HOME/.local/bin/pytest -v'
+          command: '$HOME/.local/bin/pytest'
+      - run:
+          name: "Lint"
+          command: '$HOME/.local/bin/pylint app --ignore-patterns=test_'
       - snyk/scan:
           fail-on-issues: true
           monitor-on-build: true
