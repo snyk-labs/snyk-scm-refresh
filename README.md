@@ -11,7 +11,7 @@ For repos with at least 1 project already in Snyk:
 
 **STOP NOW IF ANY OF THE FOLLOWING ARE TRUE**
 - Monitoring non-default branches
-- Using an SCM other than Github.com
+- Using an SCM other than Github.com or Github Enterprise Server
 
 ## Usage
 ```
@@ -47,12 +47,17 @@ python3 -m pip install -r requirements.txt
 ```
 export SNYK_TOKEN=<snyk-token>
 export GITHUB_TOKEN=<github-token>
+export GITHUB_ENTERPRISE_TOKEN=<github-enterprise-token>
+export GITHUB_ENTERPRISE_HOST=<github-enterprise-host>
 ```
+If GITHUB_TOKEN is set, your Github.com repos will processed
+
+If GITHUB_ENTERPRISE_TOKEN and GITHUB_ENTERPRISE_HOST are BOTH set, your Github Enterprise Server repos will be processed
 
 ## Instructions
 Make sure to use a user *API Token* that has acess to the Snyk Orgs you need to process with the script.  A service account will *not* work for GitHub, which is the only SCM currently supported at this time.
 
-Ensure that your GITHUB_TOKEN has access to the repos contained in the Snyk Orgs in scope
+Ensure that your GITHUB_TOKEN or GITHUB_ENTERPRISE_TOKEN has access to the repos contained in the Snyk Orgs in scope
 If unsure, try one org at a time with `--org-id`
 
 
