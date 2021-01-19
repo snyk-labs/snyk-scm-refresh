@@ -103,6 +103,22 @@ def test_get_snyk_project_for_repo():
                 imageTag='0.0.0',
                 imageId=None
         ),
+        Project(name='scotte-snyk/test-project-1',
+                organization=TestModels.organization,
+                id='66d7ebef-9b36-464f-889c-b92c9ef5ce12',
+                created='2020-07-27T20:09:02.150Z',
+                origin='github',
+                type='sast',
+                readOnly=False,
+                testFrequency='daily',
+                totalDependencies=32,
+                lastTestedDate='2020-07-28T07:15:24.981Z',
+                browseUrl='https://app.snyk.io/org/scott.esbrandt-ww8' \
+                    '/project/66d7ebef-9b36-464f-889c-b92c9ef5ce12',
+                issueCountsBySeverity={"low": 8, "high": 13, "medium": 15},
+                imageTag='0.0.0',
+                imageId=None
+        ),
         Project(name='scotte-snyk/test-project-2:requirements.txt',
                 organization=TestModels.organization,
                 id='93b82d1f-1544-45c9-b3bc-86e799c7225b',
@@ -121,7 +137,7 @@ def test_get_snyk_project_for_repo():
         )
     ]
 
-    snyk_projects_filtered = [snyk_projects[0]]
+    snyk_projects_filtered = [snyk_projects[0],snyk_projects[1]]
 
     assert get_snyk_projects_for_repo(snyk_projects, \
         "scotte-snyk/test-project-1") == snyk_projects_filtered

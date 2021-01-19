@@ -62,6 +62,7 @@ def get_snyk_repos_from_snyk_orgs(snyk_orgs, ARGS):
 
 def build_snyk_project_list(snyk_orgs, ARGS):
     # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
     """Build list of Snyk projects across all Snyk orgs in scope"""
     snyk_gh_projects = []
     snyk_projects = []
@@ -102,7 +103,12 @@ def build_snyk_project_list(snyk_orgs, ARGS):
                 # snyk/goof(master):pom.xml or just snyk/goof:pom.xml
                 split_project_name = project.name.split(
                     ":"
-                )  # snyk/goof(master) or #snyk/goof
+                )
+                if len(split_project_name) == 2:
+                    manifest = split_project_name[1]
+                else:
+                    manifest = split_project_name[0]
+                # snyk/goof(master) or #snyk/goof
                 tmp_branch_split = split_project_name[0].split("(")
                 if len(tmp_branch_split) == 2:
                     branch_from_name = tmp_branch_split[1].split(")")[0]
@@ -116,7 +122,7 @@ def build_snyk_project_list(snyk_orgs, ARGS):
                         "repo_full_name": split_project_name[0].split("(")[0],
                         "repo_owner": split_repo_name[0],
                         "repo_name": split_repo_name[1].split("(")[0],
-                        "manifest": split_project_name[1],
+                        "manifest": manifest,
                         "org_id": snyk_org.id,
                         "org_name": snyk_org.name,
                         "origin": project.origin,
