@@ -40,6 +40,14 @@ REPOS_SKIPPED_ON_ERROR_FILE = open(
     "%s_repos-skipped-on-error.csv" % LOG_PREFIX, "w"
 )
 REPOS_SKIPPED_ON_ERROR_FILE.write("org,repo,status\n")
+UPDATED_PROJECT_BRANCHES_FILE = open(
+    "%s_updated-project-branches.csv" % LOG_PREFIX, "w"
+)
+UPDATED_PROJECT_BRANCHES_FILE.write("org,project_name,project_id,new_branch\n")
+UPDATE_PROJECT_BRANCHES_ERRORS_FILE = open(
+    "%s_update-project-branches-errors.csv" % LOG_PREFIX, "w"
+)
+UPDATE_PROJECT_BRANCHES_ERRORS_FILE.write("org,project_name,project_id,new_branch\n")
 
 PENDING_REMOVAL_MAX_CHECKS = 45
 PENDING_REMOVAL_CHECK_INTERVAL = 20
