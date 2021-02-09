@@ -2,7 +2,10 @@
 import pytest
 from snyk.models import Project
 
-from app.gh_repo import get_gh_repo_status
+from app.gh_repo import (
+    get_gh_repo_status,
+    passes_manifest_filter
+)
 from app.utils.snyk_helper import get_snyk_projects_for_repo
 
 class MockResponse:
@@ -147,4 +150,13 @@ def test_get_snyk_project_for_repo():
 
     assert get_snyk_projects_for_repo(snyk_projects, \
         "scotte-snyk/test-project-1") == snyk_projects_filtered
-    
+
+def test_passes_manifest_filter():
+    path_fail_1 = "/__test__/path/project.csproj"
+    path_fail_2 = "/node_modules/some/package.json"
+    path_pass_1 = "package.json"
+    path_pass_2 = "requirements-test.txt"
+    assert passes_manifest_filter(path_fail_1) == False
+    assert passes_manifest_filter(path_pass_1) == True
+    assert passes_manifest_filter(path_fail_2) == False
+    assert passes_manifest_filter(path_pass_2) == True

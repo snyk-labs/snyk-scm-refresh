@@ -7,6 +7,7 @@ from app.utils.github_utils import (
 import argparse
 
 MANIFEST_REGEX_PATTERN = '^(?![.]).*(package[.]json$|Gemfile[.]lock$|pom[.]xml$|build[.]gradle$|.*[.]lockfile$|build[.]sbt$|.*req.*[.]txt$|Gopkg[.]lock|go[.]mod|vendor[.]json|packages[.]config|.*[.]csproj|.*[.]fsproj|.*[.]vbproj|project[.]json|project[.]assets[.]json|composer[.]lock|Podfile|Podfile[.]lock|.*[.]yaml|.*[.]yml|Dockerfile)'
+MANIFEST_EXCLUSION_REGEX_PATTERN = '^.*(fixtures|\/tests\/|\/__tests__\/|\/test\/|__test__|[.].*ci\/|\/node_modules\/|\/bower_components\/).*$'
 
 GITHUB_ENABLED = False
 GITHUB_ENTERPRISE_ENABLED = False
