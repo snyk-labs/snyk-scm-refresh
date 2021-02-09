@@ -4,9 +4,10 @@
 Keeps Snyk projects in sync with their associated Github repos
 
 For repos with at least 1 project already in Snyk:
-- Detect new manifests
+- Detect and import new manifests
 - Remove projects for manifests that no longer exist
 - Update projects when a repo has been renamed 
+- Detect and update default branch change (not renaming)
 - Detect deleted repos and log for review
 
 **STOP NOW IF ANY OF THE FOLLOWING ARE TRUE**
@@ -73,6 +74,8 @@ Use the `--dry-run` option to verify the execution plan for the first run
 | _potential-repo-deletes.csv | repo no longer exists |
 | _stale-manifests-deleted.csv | monitored manifest files no longer exists |
 | _renamed-manifests-deleted.csv | manifests of renamed repos that were removed |
-| _renamed-manifests-pending.csv | manifests of renamed repos that were not removed. Only when the import of the repo under the new name is copmpleted are the old ones removed. |
+| _renamed-manifests-pending.csv | manifests of renamed repos that were not removed. Only when the import of the repo under the new name is completed are the old ones removed. |
 | _completed-project-imports.csv | manifests that were imported during this job run |
+| _updated-project-branches.csv | projects with updated default branch  |
+| _update-project-branches-errors.csv | projects that had an error attempting to update default branch |
 | _repos-skipped-on-error.csv | repos skipped due to import error |

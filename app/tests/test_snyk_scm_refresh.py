@@ -12,18 +12,18 @@ class MockResponse:
         self.headers = {"Location": "test_location"}
 
     def json(self):
-        response = {"full_name": "new_owner/new_repo"}
+        response = {"full_name": "new_owner/new_repo", "default_branch": "master"}
         return response
 
 @pytest.mark.parametrize(
-    "status_code, response_message, repo, name, owner",
+    "status_code, response_message, repo, name, owner, default_branch",
     [
-        (200, "Match", "test_org/test_repo", "test_repo", "test_owner"),
-        (301, "Moved to new_repo", "new_owner/new_repo", "new_repo", "new_owner"),
-        (404, "Not Found", "test_org/test_repo", None, None)
+        (200, "Match", "test_org/test_repo", "test_repo", "test_owner", "master"),
+        (301, "Moved to new_repo", "new_owner/new_repo", "new_repo", "new_owner", ""),
+        (404, "Not Found", "test_org/test_repo", None, None, "")
     ],
 )
-def test_get_gh_repo_status(mocker, status_code, response_message, repo, name, owner):
+def test_get_gh_repo_status(mocker, status_code, response_message, repo, name, owner, default_branch):
 
     # TODO: assumes a successful redirect for the 301 case
     mocker.patch(
@@ -37,6 +37,7 @@ def test_get_gh_repo_status(mocker, status_code, response_message, repo, name, o
         "org_id": "1234-5678",
         "gh_integration_id": "12345",
         "branch_from_name": "",
+        "branch": "master"
     }
 
     repo_status = {
@@ -45,7 +46,8 @@ def test_get_gh_repo_status(mocker, status_code, response_message, repo, name, o
         "repo_name": snyk_repo["name"],
         "snyk_org_id": snyk_repo["org_id"],
         "repo_owner": snyk_repo["owner"],
-        "repo_full_name": snyk_repo["full_name"]
+        "repo_full_name": snyk_repo["full_name"],
+        "repo_default_branch": default_branch
     }
 
     assert get_gh_repo_status(snyk_repo, "test_token") == repo_status
@@ -63,6 +65,7 @@ def test_get_gh_repo_status_unauthorized(mocker):
         "org_id": "1234-5678",
         "gh_integration_id": "12345",
         "branch_from_name": "",
+        "branch": "master"
     }
 
     with pytest.raises(RuntimeError):
@@ -101,7 +104,8 @@ def test_get_snyk_project_for_repo():
                     '/project/66d7ebef-9b36-464f-889c-b92c9ef5ce12',
                 issueCountsBySeverity={"low": 8, "high": 13, "medium": 15},
                 imageTag='0.0.0',
-                imageId=None
+                imageId=None,
+                isMonitored=True
         ),
         Project(name='scotte-snyk/test-project-1',
                 organization=TestModels.organization,
@@ -117,7 +121,8 @@ def test_get_snyk_project_for_repo():
                     '/project/66d7ebef-9b36-464f-889c-b92c9ef5ce12',
                 issueCountsBySeverity={"low": 8, "high": 13, "medium": 15},
                 imageTag='0.0.0',
-                imageId=None
+                imageId=None,
+                isMonitored=True
         ),
         Project(name='scotte-snyk/test-project-2:requirements.txt',
                 organization=TestModels.organization,
@@ -133,7 +138,8 @@ def test_get_snyk_project_for_repo():
                     '/project/93b82d1f-1544-45c9-b3bc-86e799c7225b',
                 issueCountsBySeverity={"low": 8, "high": 13, "medium": 15},
                 imageTag='1.0.0',
-                imageId=None
+                imageId=None,
+                isMonitored=True
         )
     ]
 

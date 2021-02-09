@@ -17,6 +17,20 @@ def log_potential_delete(org_name, repo_name):
     app_print(org_name, repo_name, "Logging potential delete")
     common.POTENTIAL_DELETES_FILE.write("%s,%s\n" % (org_name, repo_name))
 
+def log_updated_project_branch(org_name, project_id, project_name, new_branch):
+    """ Log project branch update """
+    common.UPDATED_PROJECT_BRANCHES_FILE.write("%s,%s,%s,%s\n" % (org_name,
+                                                                  project_name,
+                                                                  project_id,
+                                                                  new_branch))
+
+def log_update_project_branch_error(org_name, project_id, project_name, new_branch):
+    """ Log project branch update """
+    common.UPDATE_PROJECT_BRANCHES_ERRORS_FILE.write("%s,%s,%s,%s\n" % (org_name,
+                                                                        project_name,
+                                                                        project_id,
+                                                                        new_branch))
+
 def get_snyk_repos_from_snyk_orgs(snyk_orgs, ARGS):
     """Build list of repositories from a given list of Snyk orgs"""
     snyk_repos = []
@@ -29,15 +43,15 @@ def get_snyk_repos_from_snyk_orgs(snyk_orgs, ARGS):
     num_projects = len(snyk_projects)
 
     for (i, project) in enumerate(snyk_projects):
-        # print("project: " + project['name'])
         if i == num_projects-1:
             snyk_repos.append(
                 SnykRepo(snyk_projects[i]["repo_full_name"],
-                        snyk_projects[i]["org_id"],
-                        snyk_projects[i]["org_name"],
-                        snyk_projects[i]["integration_id"],
-                        snyk_projects[i]["origin"],
-                        repo_projects)
+                         snyk_projects[i]["org_id"],
+                         snyk_projects[i]["org_name"],
+                         snyk_projects[i]["integration_id"],
+                         snyk_projects[i]["origin"],
+                         snyk_projects[i]["branch"],
+                         repo_projects)
             )
 
         # we encountered a new repo, or reached the end of the project list
@@ -45,11 +59,12 @@ def get_snyk_repos_from_snyk_orgs(snyk_orgs, ARGS):
             # add repo to snyk_repos
             snyk_repos.append(
                 SnykRepo(snyk_projects[i-1]["repo_full_name"],
-                        snyk_projects[i-1]["org_id"],
-                        snyk_projects[i-1]["org_name"],
-                        snyk_projects[i-1]["integration_id"],
-                        snyk_projects[i-1]["origin"],
-                        repo_projects)
+                         snyk_projects[i-1]["org_id"],
+                         snyk_projects[i-1]["org_name"],
+                         snyk_projects[i-1]["integration_id"],
+                         snyk_projects[i-1]["origin"],
+                         snyk_projects[i-1]["branch"],
+                         repo_projects)
             )
             repo_projects = [project]
 
@@ -115,6 +130,7 @@ def build_snyk_project_list(snyk_orgs, ARGS):
                 else:
                     branch_from_name = ""
                 split_repo_name = tmp_branch_split[0].split("/")
+                # print(f"project name/branch -> {project.name}/{project.branch}")
                 snyk_gh_projects.append(
                     {
                         "id": project.id,
@@ -128,6 +144,7 @@ def build_snyk_project_list(snyk_orgs, ARGS):
                         "origin": project.origin,
                         "integration_id": integration_id,
                         "branch_from_name": branch_from_name,
+                        "branch": project.branch
                     }
                 )
 
@@ -276,8 +293,7 @@ def process_import_status_checks(import_status_checks):
                             app_print(pending_delete['org_name'],
                                       pending_delete['repo_full_name'],
                                       "delete stale project [%s]" % (
-                                pending_delete['id']
-                            ))
+                                          pending_delete['id']))
                             delete_snyk_project(
                                 pending_delete['id'],
                                 pending_delete['org_id']
@@ -289,7 +305,7 @@ def process_import_status_checks(import_status_checks):
                             ))
 
             print("Checking back in %d seconds..." %
-                common.PENDING_REMOVAL_CHECK_INTERVAL)
+                  common.PENDING_REMOVAL_CHECK_INTERVAL)
             time.sleep(common.PENDING_REMOVAL_CHECK_INTERVAL)
 
         else:
@@ -316,6 +332,30 @@ def process_import_status_checks(import_status_checks):
                     )
             return
 
+def update_project_branch(project_id, project_name, org_id, new_branch_name):
+    """ update snyk project monitored branch """
+    org = common.snyk_client.organizations.get(org_id)
+    path = "org/%s/project/%s" % (org.id, project_id)
+
+    payload = {
+        "branch": new_branch_name
+    }
+    # print('updating project via ', path)
+    try:
+        response = org.client.put(path, payload)
+        log_updated_project_branch(org.name, project_id, project_name, new_branch_name)
+        return response.json()['id']
+    except snyk.errors.SnykHTTPError as err:
+        if err.code in [502, 504]:
+            print("Server error, lets try again in a minute...")
+            time.sleep(60)
+            try:
+                response = org.client.post(path, payload)
+                log_updated_project_branch(org.name, project_id, project_name, new_branch_name)
+                return response.json()['id']
+            except snyk.errors.SnykHTTPError as err_retry:
+                print(f"Still failed after retry with {str(err_retry.code)}! Logging...")
+                log_update_project_branch_error(org.name, project_id, project_name, new_branch_name)
 
 def get_import_status(import_status_url, org_id):
     """Retrieve status data for a Snyk import job"""

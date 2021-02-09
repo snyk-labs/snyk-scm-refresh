@@ -34,6 +34,7 @@ def get_gh_repo_status(snyk_gh_repo, github_token, github_enterprise=False):
     repo_owner = snyk_gh_repo["owner"]
     repo_name = snyk_gh_repo["name"]
     response_message = ""
+    repo_default_branch = ""
 
     headers = {"Authorization": "Bearer %s"}
     headers["Authorization"] = headers["Authorization"] % (github_token)
@@ -46,8 +47,11 @@ def get_gh_repo_status(snyk_gh_repo, github_token, github_enterprise=False):
     try:
         response = requests.get(url=request_url, allow_redirects=False, headers=headers)
         # print("response_code: %d" % response.status_code)
+        # print(f"response default branch -> {response.json()['default_branch']}")
+
         if response.status_code == 200:
             response_message = "Match"
+            repo_default_branch = response.json()['default_branch']
 
         elif response.status_code == 404:
             response_message = "Not Found"
@@ -75,10 +79,42 @@ def get_gh_repo_status(snyk_gh_repo, github_token, github_enterprise=False):
             "repo_name": repo_name,
             "snyk_org_id": snyk_gh_repo["org_id"],
             "repo_owner": repo_owner,
-            "repo_full_name": f"{repo_owner}/{repo_name}"
+            "repo_full_name": f"{repo_owner}/{repo_name}",
+            "repo_default_branch": repo_default_branch
         }
 
     except requests.exceptions.RequestException as err:
         repo_status = err.response
 
     return repo_status
+
+def is_default_branch_renamed(snyk_gh_repo, new_branch, github_token, github_enterprise=False):
+    """detect if default branch has been renamed"""
+    is_renamed = False
+    headers = {"Authorization": "Bearer %s"}
+    headers["Authorization"] = headers["Authorization"] % (github_token)
+    if not github_enterprise:
+        request_url = f"https://api.github.com/repos/{snyk_gh_repo.full_name}" \
+            f"/branches/{snyk_gh_repo.branch}"
+        #print("requestURL: " + request_url)
+    else:
+        request_url = f"https://{common.GITHUB_ENTERPRISE_HOST}" \
+        f"/api/v3/repos/{snyk_gh_repo.full_name}/branches/{snyk_gh_repo.branch}"
+    try:
+        response = requests.get(url=request_url, allow_redirects=False, headers=headers)
+
+        if response.status_code == 301 or response.status_code == 302:
+            print('redirect response url: ' + response.headers["Location"])
+            if str(response.headers["Location"]).endswith(f"/{new_branch}"):
+                # print('the redirect is pointing to the new branch')
+                is_renamed = True
+            # else:
+            #    print('the redirect is pointing to a different branch')
+        else:
+            is_renamed = False
+    except requests.exceptions.RequestException as err:
+        print(f"exception trying to determine renamed status: {err.response}")
+        #log this to file
+        is_renamed = True
+
+    return is_renamed
