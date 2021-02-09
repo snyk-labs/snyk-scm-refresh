@@ -23,11 +23,15 @@ def get_repo_manifests(snyk_repo_name, origin):
 
     while contents:
         file_content = contents.pop(0)
-        # print(file_content.path)
-        if re.match(common.MANIFEST_REGEX_PATTERN, file_content.path):
-            #print('re matched one: ' + file_content.path)
+        if passes_manifest_filter(file_content.path):
             manifests.append(file_content.path)
     return manifests
+
+def passes_manifest_filter(path):
+    """ check if given path should be imported based
+        on configured search and exclusion filters """
+    return bool(re.match(common.MANIFEST_REGEX_PATTERN, path) and
+            not re.match(common.MANIFEST_EXCLUSION_REGEX_PATTERN, path))
 
 def get_gh_repo_status(snyk_gh_repo, github_token, github_enterprise=False):
     """detect if repo still exists, has been removed, or renamed"""
