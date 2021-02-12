@@ -87,6 +87,12 @@ def parse_command_line_args():
         required=False,
         action="store_true",
     )
+    parser.add_argument(
+        "--debug",
+        help="Write detailed debug data to snyk_scm_refresh.log for troubleshooting",
+        required=False,
+        action="store_true",
+    )
 
     return parser.parse_args()
 

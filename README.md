@@ -17,7 +17,7 @@ For repos with at least 1 project already in Snyk:
 ## Usage
 ```
 usage: snyk_scm_refresh.py [-h] [--org-id=ORG_ID] [--repo-name=REPO_NAME]
-                           [--dry-run]
+                           [--dry-run] [--debug]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -30,6 +30,8 @@ optional arguments:
                         in the Snyk org.
   --dry-run             Simulate processing of the script without making
                         changes to Snyk
+  --debug               Write detailed debug data to snyk_scm_refresh.log for 
+                        troubleshooting
 ```
 
 
