@@ -46,6 +46,9 @@ if __name__ == "__main__":
         print(f"{GITHUB_TOKEN_HIDDEN}")
 
     print("---")
-    logging.basicConfig(filename=common.LOG_FILENAME, level=logging.INFO, filemode="w")
+    if common.ARGS.debug:
+        logging.basicConfig(filename=common.LOG_FILENAME, level=logging.DEBUG, filemode="w")
+    else:
+        logging.basicConfig(filename=common.LOG_FILENAME, level=logging.INFO, filemode="w")
 
     run()
