@@ -16,29 +16,33 @@ For repos with at least 1 project already in Snyk:
 
 ## Usage
 ```
-usage: snyk_scm_refresh.py [-h] [--org-id=ORG_ID] [--repo-name=REPO_NAME]
-                           [--dry-run] [--debug]
+usage: snyk_scm_refresh.py [-h] [--org-id ORG_ID] [--repo-name REPO_NAME] [--sca {on,off}] [--container {on,off}] [--iac {on,off}] [--code {on,off}] [--dry-run] [--debug]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --org-id=ORG_ID       The Snyk Organisation Id found in Organization >
-                        Settings. If omitted, process all orgs the Snyk user
-                        has access to.
-  --repo-name=REPO_NAME
-                        The full name of the repo to process (e.g.
-                        githubuser/githubrepo). If omitted, process all repos
-                        in the Snyk org.
-  --dry-run             Simulate processing of the script without making
-                        changes to Snyk
-  --debug               Write detailed debug data to snyk_scm_refresh.log for 
-                        troubleshooting
+  --org-id ORG_ID       The Snyk Organisation Id found in Organization > Settings. If omitted, process all orgs the Snyk user has access to.
+  --repo-name REPO_NAME
+                        The full name of the repo to process (e.g. githubuser/githubrepo). If omitted, process all repos in the Snyk org.
+  --sca {on,off}        scan for SCA manifests (on by default)
+  --container {on,off}  scan for container projects, e.g. Dockerfile (on by default)
+  --iac {on,off}        scan for IAC manifests (experimental, off by default)
+  --code {on,off}       create code analysis if not present (experimental, off by default)
+  --dry-run             Simulate processing of the script without making changes to Snyk
+  --debug               Write detailed debug data to snyk_scm_refresh.log for troubleshooting
 ```
 
+### Sync SCA projects only
+`./snyk_scm_refresh.py --org-id=12345 --container=off`
+
+### Sync Container projects only
+`./snyk_scm_refresh.py --org-id=12345 --sca=off --container=on`
+
+### Enable Snyk Code analysis for repos
+only: `./snyk_scm_refresh.py --org-id=12345 --sca=off --container=off --code=on` \
+defaults + snyk code enable: `./snyk_scm_refresh.py --org-id=12345 --code=on`
 
 
 ## Dependencies
-pysnyk, PyGithub, requests
-
 ```
 pip install -r  requirements.txt
 ```

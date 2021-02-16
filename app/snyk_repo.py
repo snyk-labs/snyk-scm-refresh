@@ -3,8 +3,13 @@ data and methods for managing
 snyk projects from the same repository
 """
 import sys
+import re
 import snyk
-from app.gh_repo import get_repo_manifests
+import common
+from app.gh_repo import (
+    get_repo_manifests,
+    passes_manifest_filter
+)
 import app.utils.snyk_helper
 
 class SnykRepo():
@@ -34,12 +39,22 @@ class SnykRepo():
         """ return list of projects for this repo """
         return self.snyk_projects
 
+    def has_snyk_code(self):
+        """ returns true if snyk already has a
+            snyk code project for this repo """
+        has_snyk_code = False
+        for snyk_project in self.snyk_projects:
+            if snyk_project["type"] == "sast":
+                has_snyk_code = True
+                break
+        return has_snyk_code
+
     def add_new_manifests(self, dry_run):
         """ find and import new projects """
         import_response = []
         files = []
 
-        gh_repo_manifests = get_repo_manifests(self.full_name, self.origin)
+        gh_repo_manifests = get_repo_manifests(self.full_name, self.origin, self.has_snyk_code())
 
         for gh_repo_manifest in gh_repo_manifests:
             if gh_repo_manifest not in {sp['manifest'] for sp in self.snyk_projects}:
@@ -55,18 +70,26 @@ class SnykRepo():
                     files)
         else:
             for file in files:
+                import_message = ""
+                if re.match(common.MANIFEST_PATTERN_CODE, file["path"]):
+                    import_message = "would trigger code analysis via"
+                else:
+                    import_message = "would import"
+
                 app.utils.snyk_helper.app_print(self.org_name,
                                                 self.full_name,
-                                                f"Would import: {file}")
+                                                f"{import_message}: {file['path']}")
         return import_response
 
     def delete_stale_manifests(self, dry_run):
         """ delete snyk projects for which the corresponding SCM file no longer exists """
         result = []
-        gh_repo_manifests = get_repo_manifests(self.full_name, self.origin)
+        gh_repo_manifests = get_repo_manifests(self.full_name, self.origin, True)
         for snyk_project in self.snyk_projects:
             # print(snyk_project["manifest"])
-            if snyk_project["manifest"] not in gh_repo_manifests:
+            if (snyk_project["type"] != "sast" and
+                    passes_manifest_filter(snyk_project["manifest"]) and
+                    snyk_project["manifest"] not in gh_repo_manifests):
                 # delete project, append on success
                 if not dry_run:
                     try:

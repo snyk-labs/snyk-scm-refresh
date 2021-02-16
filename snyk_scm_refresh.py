@@ -13,7 +13,10 @@ if __name__ == "__main__":
     if common.ARGS.dry_run:
         print("****** DRY-RUN MODE ******\n")
     for arg in vars(common.ARGS):
-        print(f"{arg}={getattr(common.ARGS, arg)}")
+        if any(arg in x for x in ['sca', 'container', 'iac', 'code']):
+            print(f"{arg}={common.toggle_to_bool(getattr(common.ARGS, arg))}")
+        else:
+           print(f"{arg}={getattr(common.ARGS, arg)}")
     print("---")
 
     if getenv("SNYK_TOKEN") is None:

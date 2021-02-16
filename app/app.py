@@ -3,6 +3,7 @@ Keep Snyk projects in sync with their corresponding SCM repositories
 """
 import sys
 import time
+import re
 import snyk.errors
 import common
 from app.models import ImportStatus
@@ -51,6 +52,7 @@ def run():
     import_status_checks = []
 
     for (i, snyk_repo) in enumerate(snyk_repos):
+        # snyk_repo.get_projects()
         deleted_projects = []
         is_default_renamed = False
         app_print(snyk_repo.org_name,
@@ -146,9 +148,15 @@ def run():
                               snyk_repo.full_name,
                               f"Found {len(projects_import.files)} to import")
                     for file in projects_import.files:
+                        import_message = ""
+                        if re.match(common.MANIFEST_PATTERN_CODE, file["path"]):
+                            import_message = "Triggering code analysis via"
+                        else:
+                            import_message = "Importing new manifest"
+
                         app_print(snyk_repo.org_name,
                                   snyk_repo.full_name,
-                                  f"Importing new manifest: {file['path']}")
+                                  f"{import_message}: {file['path']}")
 
         # if snyk_repo has been moved/renamed (301), then re-import the entire repo
         # with the new name and remove the old one (make optional)
