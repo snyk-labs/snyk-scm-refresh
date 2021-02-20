@@ -34,6 +34,9 @@ optional arguments:
   --debug               Write detailed debug data to snyk_scm_refresh.log for troubleshooting
 ```
 
+### Sync with defaults
+`./snyk_scm_refresh.py --org-id=12345
+
 ### Sync SCA projects only
 `./snyk_scm_refresh.py --org-id=12345 --container=off`
 
