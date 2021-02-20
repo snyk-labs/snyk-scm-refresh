@@ -3,7 +3,7 @@ import re
 import requests
 import common
 
-def get_repo_manifests(snyk_repo_name, origin):
+def get_repo_manifests(snyk_repo_name, origin, skip_snyk_code):
     """retrieve list of all supported manifests in a given github repo"""
     manifests = []
     try:
@@ -19,19 +19,42 @@ def get_repo_manifests(snyk_repo_name, origin):
             gh_repo = common.gh_enterprise_client.get_user().get_repo(snyk_repo_name)
 
     contents = gh_repo.get_git_tree(gh_repo.default_branch, True).tree
-    #print(contents)
 
     while contents:
         file_content = contents.pop(0)
-        if passes_manifest_filter(file_content.path):
+        if passes_manifest_filter(file_content.path, skip_snyk_code):
             manifests.append(file_content.path)
+        if re.match(common.MANIFEST_PATTERN_CODE, file_content.path):
+            skip_snyk_code = True
+    #print(manifests)
     return manifests
 
-def passes_manifest_filter(path):
+def passes_manifest_filter(path, skip_snyk_code=False):
     """ check if given path should be imported based
         on configured search and exclusion filters """
-    return bool(re.match(common.MANIFEST_REGEX_PATTERN, path) and
-            not re.match(common.MANIFEST_EXCLUSION_REGEX_PATTERN, path))
+
+    passes_filter = False
+    if (common.PROJECT_TYPE_ENABLED_SCA and
+            re.match(common.MANIFEST_PATTERN_SCA, path)):
+        passes_filter = True
+        # print('passes SCA filter true')
+    if (common.PROJECT_TYPE_ENABLED_CONTAINER and
+            re.match(common.MANIFEST_PATTERN_CONTAINER, path)):
+        passes_filter = True
+        # print('passes CONTAINER filter true')
+    if (common.PROJECT_TYPE_ENABLED_IAC and
+            re.match(common.MANIFEST_PATTERN_IAC, path)):
+        passes_filter = True
+        # print('passes IAC filter true')
+    if (common.PROJECT_TYPE_ENABLED_CODE and
+            re.match(common.MANIFEST_PATTERN_CODE, path)):
+        if not skip_snyk_code:
+            passes_filter = True
+            # print('passes CODE filter true')
+    if re.match(common.MANIFEST_PATTERN_EXCLUSIONS, path):
+        passes_filter = False
+
+    return passes_filter
 
 def get_gh_repo_status(snyk_gh_repo, github_token, github_enterprise=False):
     """detect if repo still exists, has been removed, or renamed"""

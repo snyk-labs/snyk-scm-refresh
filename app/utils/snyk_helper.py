@@ -142,6 +142,7 @@ def build_snyk_project_list(snyk_orgs, ARGS):
                         "org_id": snyk_org.id,
                         "org_name": snyk_org.name,
                         "origin": project.origin,
+                        "type": project.type,
                         "integration_id": integration_id,
                         "branch_from_name": branch_from_name,
                         "branch": project.branch
@@ -218,6 +219,7 @@ def delete_snyk_project(project_id, org_id):
 
 def process_import_status_checks(import_status_checks):
     # pylint: disable=too-many-nested-blocks, too-many-branches
+    # pylint: disable=too-many-locals
     """
     Check status of pending import jobs
     up to PENDING_REMOVAL_MAX_CHECKS times,
@@ -275,15 +277,18 @@ def process_import_status_checks(import_status_checks):
                                 # print(import_status_log)
                                 import_logs_completed.append(uniq_import_log)
                                 for project in import_status_log["projects"]:
-                                    app_print(import_job.org_name,
-                                              import_status_log["name"],
-                                              f"Imported {project['targetFile']}")
-                                    common.COMPLETED_PROJECT_IMPORTS_FILE.write("%s,%s:%s,%s\n" % (
-                                        import_job.org_name,
-                                        import_status_log["name"],
-                                        project["targetFile"],
-                                        project["success"]
-                                    ))
+                                    if 'targetFile' in project:
+                                        imported_project = project['targetFile']
+                                        app_print(import_job.org_name,
+                                                  import_status_log["name"],
+                                                  f"Imported {imported_project}")
+                                        # pylint: disable=line-too-long
+                                        common.COMPLETED_PROJECT_IMPORTS_FILE.write("%s,%s:%s,%s\n" % (
+                                            import_job.org_name,
+                                            import_status_log["name"],
+                                            imported_project,
+                                            project["success"]
+                                        ))
 
                     if import_status["status"] != "pending":
                         import_jobs_completed.append(import_job.import_job_id)
