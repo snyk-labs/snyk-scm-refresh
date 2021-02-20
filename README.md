@@ -16,13 +16,16 @@ For repos with at least 1 project already in Snyk:
 
 ## Usage
 ```
-usage: snyk_scm_refresh.py [-h] [--org-id ORG_ID] [--repo-name REPO_NAME] [--sca {on,off}] [--container {on,off}] [--iac {on,off}] [--code {on,off}] [--dry-run] [--debug]
+usage: snyk_scm_refresh.py [-h] [--org-id ORG_ID] [--repo-name REPO_NAME] [--sca {on,off}] 
+       [--container {on,off}] [--iac {on,off}] [--code {on,off}] [--dry-run] [--debug]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --org-id ORG_ID       The Snyk Organisation Id found in Organization > Settings. If omitted, process all orgs the Snyk user has access to.
+  --org-id ORG_ID       The Snyk Organisation Id found in Organization > Settings. 
+                        If omitted, process all orgs the Snyk user has access to.
   --repo-name REPO_NAME
-                        The full name of the repo to process (e.g. githubuser/githubrepo). If omitted, process all repos in the Snyk org.
+                        The full name of the repo to process (e.g. githubuser/githubrepo). 
+                        If omitted, process all repos in the Snyk org.
   --sca {on,off}        scan for SCA manifests (on by default)
   --container {on,off}  scan for container projects, e.g. Dockerfile (on by default)
   --iac {on,off}        scan for IAC manifests (experimental, off by default)
