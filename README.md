@@ -8,6 +8,7 @@ For repos with at least 1 project already in Snyk:
 - Remove projects for manifests that no longer exist
 - Update projects when a repo has been renamed 
 - Detect and update default branch change (not renaming)
+- Enable Snyk Code analysis for repos
 - Detect deleted repos and log for review
 
 **STOP NOW IF ANY OF THE FOLLOWING ARE TRUE**
