@@ -4,7 +4,8 @@ from snyk.models import Project
 
 from app.gh_repo import (
     get_gh_repo_status,
-    passes_manifest_filter
+    passes_manifest_filter,
+
 )
 from app.utils.snyk_helper import get_snyk_projects_for_repo
 
