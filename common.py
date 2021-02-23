@@ -15,7 +15,7 @@ MANIFEST_PATTERN_SCA = '^(?![.]).*(package[.]json|Gemfile[.]lock|pom[.]xml|build
 MANIFEST_PATTERN_CONTAINER = '^.*(Dockerfile)$'
 MANIFEST_PATTERN_IAC = '.*[.](yaml|yml|tf)$'
 MANIFEST_PATTERN_CODE = '.*[.](js|cs|php|java|py)$'
-MANIFEST_PATTERN_EXCLUSIONS = '^.*(fixtures|\/tests\/|\/__tests__\/|\/test\/|__test__|[.].*ci\/|.*ci[.].yml|\/node_modules\/|\/bower_components\/|variables[.]tf|outputs[.]tf).*$'
+MANIFEST_PATTERN_EXCLUSIONS = '^.*(fixtures|tests\/|__tests__|test\/|__test__|[.].*ci\/|.*ci[.].yml|node_modules\/|bower_components\/|variables[.]tf|outputs[.]tf).*$'
 
 GITHUB_ENABLED = False
 GITHUB_ENTERPRISE_ENABLED = False

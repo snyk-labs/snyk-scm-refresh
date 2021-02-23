@@ -157,7 +157,9 @@ def test_passes_manifest_filter():
     path_fail_2 = "/node_modules/some/package.json"
     path_pass_1 = "package.json"
     path_pass_2 = "requirements-test.txt"
+    path_fail_3 = "tests/vuln-in-git/Gemfile.lock"
     assert passes_manifest_filter(path_fail_1) == False
     assert passes_manifest_filter(path_pass_1) == True
     assert passes_manifest_filter(path_fail_2) == False
     assert passes_manifest_filter(path_pass_2) == True
+    assert passes_manifest_filter(path_fail_3) == False
