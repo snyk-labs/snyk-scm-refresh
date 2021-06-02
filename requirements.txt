@@ -1,4 +1,4 @@
 pysnyk==0.6.1
 PyGithub==1.47
 requests==2.23.0
-urllib3==1.25.9
+urllib3==1.26.5
