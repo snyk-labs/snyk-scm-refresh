@@ -36,7 +36,7 @@ optional arguments:
 ```
 
 ### Sync with defaults
-`./snyk_scm_refresh.py --org-id=12345
+`./snyk_scm_refresh.py --org-id=12345`
 
 ### Sync SCA projects only
 `./snyk_scm_refresh.py --org-id=12345 --container=off`
