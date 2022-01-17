@@ -12,11 +12,18 @@ if __name__ == "__main__":
 
     if common.ARGS.dry_run:
         print("****** DRY-RUN MODE ******\n")
+    
+    print("command-line args:")
     for arg in vars(common.ARGS):
         if any(arg in x for x in ['sca', 'container', 'iac', 'code']):
-            print(f"{arg}={common.toggle_to_bool(getattr(common.ARGS, arg))}")
+            print(f"    {arg}={common.toggle_to_bool(getattr(common.ARGS, arg))}")
         else:
-           print(f"{arg}={getattr(common.ARGS, arg)}")
+           print(f"    {arg}={getattr(common.ARGS, arg)}")
+    
+    print("\neffective configuration:")
+    for key in common.effective_config:
+        print(f"    {key}={common.effective_config[key]}")
+
     print("---")
 
     if getenv("SNYK_TOKEN") is None:

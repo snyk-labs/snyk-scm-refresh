@@ -3,19 +3,25 @@ from os import  (
     getenv,
     path
 )
+import argparse
+import configparser
+import yaml
+
 from snyk import SnykClient
 from app.utils.github_utils import (
     create_github_client,
     create_github_enterprise_client
 )
-import argparse
-import configparser
 
-MANIFEST_PATTERN_SCA = '^(?![.]).*(package[.]json|Gemfile[.]lock|pom[.]xml|build[.]gradle|.*[.]lockfile|build[.]sbt|.*req.*[.]txt|Gopkg[.]lock|go[.]mod|vendor[.]json|packages[.]config|.*[.]csproj|.*[.]fsproj|.*[.]vbproj|project[.]json|project[.]assets[.]json|composer[.]lock|Podfile|Podfile[.]lock)$'
-MANIFEST_PATTERN_CONTAINER = '^.*(Dockerfile)$'
-MANIFEST_PATTERN_IAC = '.*[.](yaml|yml|tf)$'
-MANIFEST_PATTERN_CODE = '.*[.](js|cs|php|java|py)$'
-MANIFEST_PATTERN_EXCLUSIONS = '^.*(fixtures|tests\/|__tests__|test\/|__test__|[.].*ci\/|.*ci[.].yml|node_modules\/|bower_components\/|variables[.]tf|outputs[.]tf).*$'
+CONFIG_FILE = "snyk_scm_refresh.yaml"
+config_yaml = None
+
+try: 
+    with open(CONFIG_FILE, 'r') as file:
+        config_yaml = yaml.safe_load(file)
+except FileNotFoundError as e:
+    print(f"Configuration ({CONFIG_FILE}) not found, using defaults...\n")
+
 
 GITHUB_ENABLED = False
 GITHUB_ENTERPRISE_ENABLED = False
@@ -93,28 +99,28 @@ def parse_command_line_args():
         "--sca",
         help="scan for SCA manifests (on by default)",
         required=False,
-        default=True,
+        #default=True,
         choices=['on', 'off']
     )
     parser.add_argument(
         "--container",
         help="scan for container projects, e.g. Dockerfile (on by default)",
         required=False,
-        default=True,
+        #default=True,
         choices=['on', 'off']
     )
     parser.add_argument(
         "--iac",
         help="scan for IAC manifests (experimental, off by default)",
         required=False,
-        default=False,
+        #default=False,
         choices=['on', 'off']
     )
     parser.add_argument(
         "--code",
         help="create code analysis if not present (experimental, off by default)",
         required=False,
-        default=False,
+        #default=False,
         choices=['on', 'off']
     )
     parser.add_argument(
@@ -135,13 +141,61 @@ def parse_command_line_args():
 ARGS = parse_command_line_args()
 
 def toggle_to_bool(toggle_value) -> bool:
-    if toggle_value == "on":
+    if toggle_value == 'on':
         return True
-    if toggle_value == "off":
+    if toggle_value == 'off':
+        return False
+    if toggle_value is not None:
+        return True
+    if toggle_value is None:
         return False
     return toggle_value
 
-PROJECT_TYPE_ENABLED_SCA = toggle_to_bool(ARGS.sca)
-PROJECT_TYPE_ENABLED_CONTAINER = toggle_to_bool(ARGS.container)
-PROJECT_TYPE_ENABLED_IAC = toggle_to_bool(ARGS.iac)
-PROJECT_TYPE_ENABLED_CODE = toggle_to_bool(ARGS.code)
+# configuration
+# hard-coded defaults that will be used when no config is present
+MANIFEST_PATTERN_SCA = '^(?![.]).*(package[.]json|Gemfile[.]lock|pom[.]xml|build[.]gradle|.*[.]lockfile|build[.]sbt|.*req.*[.]txt|Gopkg[.]lock|go[.]mod|vendor[.]json|packages[.]config|.*[.]csproj|.*[.]fsproj|.*[.]vbproj|project[.]json|project[.]assets[.]json|composer[.]lock|Podfile|Podfile[.]lock)$'
+MANIFEST_PATTERN_CONTAINER = '^.*(Dockerfile)$'
+MANIFEST_PATTERN_IAC = '.*[.](yaml|yml|tf)$'
+MANIFEST_PATTERN_CODE = '.*[.](js|cs|php|java|py)$'
+MANIFEST_PATTERN_EXCLUSIONS = '^.*(fixtures|tests\/|__tests__|test\/|__test__|[.].*ci\/|.*ci[.].yml|node_modules\/|bower_components\/|variables[.]tf|outputs[.]tf).*$'
+PROJECT_TYPE_ENABLED_SCA = True
+PROJECT_TYPE_ENABLED_CONTAINER = True
+PROJECT_TYPE_ENABLED_IAC = False
+PROJECT_TYPE_ENABLED_CODE = False
+
+# read overrides from config file
+if config_yaml is not None:
+    try:
+        MANIFEST_PATTERN_SCA = config_yaml["manifest_patterns"]["sca"]
+        MANIFEST_PATTERN_CONTAINER = config_yaml["manifest_patterns"]["container"]
+        MANIFEST_PATTERN_IAC = config_yaml["manifest_patterns"]["iac"]
+        MANIFEST_PATTERN_CODE = config_yaml["manifest_patterns"]["code"]
+        MANIFEST_PATTERN_EXCLUSIONS = config_yaml["manifest_exclusions"]
+        PROJECT_TYPE_ENABLED_SCA = config_yaml["project_types"]["sca"]
+        PROJECT_TYPE_ENABLED_CONTAINER = config_yaml["project_types"]["container"]
+        PROJECT_TYPE_ENABLED_IAC = config_yaml["project_types"]["iac"]
+        PROJECT_TYPE_ENABLED_CODE = config_yaml["project_types"]["code"]
+    except yaml.YAMLError as e:
+        print(e)
+
+# check for overrides from command-line args
+if ARGS.sca is not None:
+    PROJECT_TYPE_ENABLED_SCA = ARGS.sca
+if ARGS.container is not None:
+    PROJECT_TYPE_ENABLED_CONTAINER = ARGS.container
+if ARGS.iac is not None:
+    PROJECT_TYPE_ENABLED_IAC = ARGS.iac
+if ARGS.code is not None:
+    PROJECT_TYPE_ENABLED_CODE = ARGS.code
+
+effective_config = {
+    "MANIFEST_PATTERN_SCA": MANIFEST_PATTERN_SCA,
+    "MANIFEST_PATTERN_CONTAINER": MANIFEST_PATTERN_CONTAINER,
+    "MANIFEST_PATTERN_IAC": MANIFEST_PATTERN_IAC,
+    "MANIFEST_PATTERN_CODE": MANIFEST_PATTERN_CODE,
+    "MANIFEST_PATTERN_EXCLUSIONS": MANIFEST_PATTERN_EXCLUSIONS,
+    "PROJECT_TYPE_ENABLED_SCA": toggle_to_bool(PROJECT_TYPE_ENABLED_SCA),
+    "PROJECT_TYPE_ENABLED_CONTAINER": toggle_to_bool(PROJECT_TYPE_ENABLED_CONTAINER),
+    "PROJECT_TYPE_ENABLED_IAC": toggle_to_bool(PROJECT_TYPE_ENABLED_IAC),
+    "PROJECT_TYPE_ENABLED_CODE": toggle_to_bool(PROJECT_TYPE_ENABLED_CODE)
+}

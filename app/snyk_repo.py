@@ -71,7 +71,7 @@ class SnykRepo():
         else:
             for file in files:
                 import_message = ""
-                if re.match(common.MANIFEST_PATTERN_CODE, file["path"]):
+                if re.match(common.effective_config["MANIFEST_PATTERN_CODE"], file["path"]):
                     import_message = "would trigger code analysis via"
                 else:
                     import_message = "would import"

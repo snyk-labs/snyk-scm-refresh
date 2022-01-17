@@ -1,0 +1,14 @@
+schema: 1
+project_types:
+  sca: 'on'
+  container: 'on'
+  iac: 'off' # experimental
+  code: 'off' # experimental
+  
+manifest_patterns:
+  sca: '^(?![.]).*(package[.]json|Gemfile[.]lock|pom[.]xml|build[.]gradle|.*[.]lockfile|build[.]sbt|.*req.*[.]txt|Gopkg[.]lock|go[.]mod|vendor[.]json|packages[.]config|.*[.]csproj|.*[.]fsproj|.*[.]vbproj|project[.]json|project[.]assets[.]json|composer[.]lock|Podfile|Podfile[.]lock)$'
+  container: '^.*(Dockerfile)$'
+  iac: '.*[.](yaml|yml|tf)$'
+  code: '.*[.](js|cs|php|java|py)$'
+
+manifest_exclusions: '^.*(fixtures|tests\/|__tests__|test\/|__test__|[.].*ci\/|.*ci[.].yml|node_modules\/|bower_components\/|variables[.]tf|outputs[.]tf).*$'

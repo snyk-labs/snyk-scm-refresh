@@ -24,7 +24,7 @@ def get_repo_manifests(snyk_repo_name, origin, skip_snyk_code):
         file_content = contents.pop(0)
         if passes_manifest_filter(file_content.path, skip_snyk_code):
             manifests.append(file_content.path)
-        if re.match(common.MANIFEST_PATTERN_CODE, file_content.path):
+        if re.match(common.effective_config["MANIFEST_PATTERN_CODE"], file_content.path):
             skip_snyk_code = True
     #print(manifests)
     return manifests
@@ -34,24 +34,24 @@ def passes_manifest_filter(path, skip_snyk_code=False):
         on configured search and exclusion filters """
 
     passes_filter = False
-    if (common.PROJECT_TYPE_ENABLED_SCA and
-            re.match(common.MANIFEST_PATTERN_SCA, path)):
+    if (common.effective_config["PROJECT_TYPE_ENABLED_SCA"] and
+            re.match(common.effective_config["MANIFEST_PATTERN_SCA"], path)):
         passes_filter = True
         # print('passes SCA filter true')
-    if (common.PROJECT_TYPE_ENABLED_CONTAINER and
-            re.match(common.MANIFEST_PATTERN_CONTAINER, path)):
+    if (common.effective_config["PROJECT_TYPE_ENABLED_CONTAINER"] and
+            re.match(common.effective_config["MANIFEST_PATTERN_CONTAINER"], path)):
         passes_filter = True
         # print('passes CONTAINER filter true')
-    if (common.PROJECT_TYPE_ENABLED_IAC and
-            re.match(common.MANIFEST_PATTERN_IAC, path)):
+    if (common.effective_config["PROJECT_TYPE_ENABLED_IAC"] and
+            re.match(common.effective_config["MANIFEST_PATTERN_IAC"], path)):
         passes_filter = True
         # print('passes IAC filter true')
-    if (common.PROJECT_TYPE_ENABLED_CODE and
-            re.match(common.MANIFEST_PATTERN_CODE, path)):
+    if (common.effective_config["PROJECT_TYPE_ENABLED_CODE"] and
+            re.match(common.effective_config["MANIFEST_PATTERN_CODE"], path)):
         if not skip_snyk_code:
             passes_filter = True
             # print('passes CODE filter true')
-    if re.match(common.MANIFEST_PATTERN_EXCLUSIONS, path):
+    if re.match(common.effective_config["MANIFEST_PATTERN_EXCLUSIONS"], path):
         passes_filter = False
 
     return passes_filter
