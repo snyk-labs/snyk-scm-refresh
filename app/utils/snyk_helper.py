@@ -195,6 +195,8 @@ def import_manifests(org_id, repo_full_name, integration_id, files=[]) -> Import
             except snyk.errors.SnykHTTPError as err_retry:
                 print(f"Still failed after retry with {str(err_retry.code)}!")
                 raise
+        else:
+            raise
     return ImportStatus(re.search('org/.+/integrations/.+/import/(.+)',
                                   response.headers['Location']).group(1),
                         response.headers['Location'],
