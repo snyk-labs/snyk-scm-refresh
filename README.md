@@ -1,6 +1,12 @@
 # snyk-scm-refresh
 [![Known Vulnerabilities](https://snyk.io/test/github/snyk-tech-services/snyk-scm-refresh/badge.svg)](https://snyk.io/test/github/snyk-tech-services/snyk-scm-refresh) [![circleci](https://circleci.com/gh/snyk-tech-services/snyk-scm-refresh.svg?style=svg)](https://circleci.com/gh/snyk-tech-services/snyk-scm-refresh)
 
+<blockquote>
+<g-emoji class="g-emoji" alias="warning" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/26a0.png">⚠️</g-emoji> <strong>WARNING:</strong>
+Python 3.10 introduces breaking changes that are currently incompatible with this tool. You must use Python 3.7-3.9
+</blockquote>
+<br/>
+
 Keeps Snyk projects in sync with their associated Github repos
 
 For repos with at least 1 project already in Snyk:
@@ -10,6 +16,8 @@ For repos with at least 1 project already in Snyk:
 - Detect and update default branch change (not renaming)
 - Enable Snyk Code analysis for repos
 - Detect deleted repos and log for review
+
+
 
 **STOP NOW IF ANY OF THE FOLLOWING ARE TRUE**
 - Monitoring non-default branches
