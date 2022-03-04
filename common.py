@@ -16,9 +16,11 @@ MANIFEST_PATTERN_CONTAINER = '^.*(Dockerfile)$'
 MANIFEST_PATTERN_IAC = '.*[.](yaml|yml|tf)$'
 MANIFEST_PATTERN_CODE = '.*[.](js|cs|php|java|py)$'
 MANIFEST_PATTERN_EXCLUSIONS = '^.*(fixtures|tests\/|__tests__|test\/|__test__|[.].*ci\/|.*ci[.].yml|node_modules\/|bower_components\/|variables[.]tf|outputs[.]tf).*$'
+GITHUB_CLOUD_API_HOST="api.github.com"
 
 GITHUB_ENABLED = False
 GITHUB_ENTERPRISE_ENABLED = False
+USE_GHE_INTEGRATION_FOR_GH_CLOUD = False
 
 SNYK_TOKEN = getenv("SNYK_TOKEN")
 GITHUB_TOKEN = getenv("GITHUB_TOKEN")
@@ -63,16 +65,25 @@ PENDING_REMOVAL_CHECK_INTERVAL = 20
 
 snyk_client = SnykClient(SNYK_TOKEN)
 
+if (GITHUB_ENTERPRISE_HOST == GITHUB_CLOUD_API_HOST):
+   USE_GHE_INTEGRATION_FOR_GH_CLOUD = True
+
 if (GITHUB_TOKEN):
     GITHUB_ENABLED = True
     gh_client = create_github_client(GITHUB_TOKEN)
+    print("created github.com client")
 
 if (GITHUB_ENTERPRISE_HOST):
     GITHUB_ENTERPRISE_ENABLED = True
-    gh_enterprise_client = create_github_enterprise_client(GITHUB_ENTERPRISE_TOKEN, GITHUB_ENTERPRISE_HOST)
+    if USE_GHE_INTEGRATION_FOR_GH_CLOUD:
+        gh_enterprise_client = create_github_client(GITHUB_ENTERPRISE_TOKEN)
+        print(f"created github client for enterprise host: {GITHUB_ENTERPRISE_HOST}")
+    else:
+        print(f"created GH enterprise client for host: {GITHUB_ENTERPRISE_HOST}")
+        gh_enterprise_client = create_github_enterprise_client(GITHUB_ENTERPRISE_TOKEN, GITHUB_ENTERPRISE_HOST)
 
 def parse_command_line_args():
-    """Parse command-line arguments"""
+    """Parse command-line arguments"""                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
