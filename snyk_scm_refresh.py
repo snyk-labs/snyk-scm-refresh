@@ -11,12 +11,12 @@ from app import run
 if __name__ == "__main__":
 
     if common.ARGS.dry_run:
-        print("****** DRY-RUN MODE ******\n")
+        print("\n****** DRY-RUN MODE ******\n")
     for arg in vars(common.ARGS):
         if any(arg in x for x in ['sca', 'container', 'iac', 'code']):
             print(f"{arg}={common.toggle_to_bool(getattr(common.ARGS, arg))}")
         else:
-           print(f"{arg}={getattr(common.ARGS, arg)}")
+            print(f"{arg}={getattr(common.ARGS, arg)}")
     print("---")
 
     if getenv("SNYK_TOKEN") is None:

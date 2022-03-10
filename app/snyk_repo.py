@@ -10,7 +10,7 @@ from app.gh_repo import (
     get_repo_manifests,
     passes_manifest_filter
 )
-import app.utils.snyk_helper
+import app
 
 class SnykRepo():
     """ SnykRepo object """
@@ -33,7 +33,7 @@ class SnykRepo():
         self.branch = branch
         self.snyk_projects = snyk_projects
     def __getitem__(self, item):
-        return self.full_name
+        return self.__dict__[item]
 
     def get_projects(self):
         """ return list of projects for this repo """
@@ -107,7 +107,7 @@ class SnykRepo():
         for (i, snyk_project) in enumerate(self.snyk_projects):
             if snyk_project["branch"] != new_branch_name:
                 if not dry_run:
-                    sys.stdout.write("\r  - %s/%s" % (i+1, len(self.snyk_projects)))
+                    sys.stdout.write(f"\r  - {i+1}/{len(self.snyk_projects)}")
                     sys.stdout.flush()
                     try:
                         app.utils.snyk_helper.update_project_branch(snyk_project["id"],
