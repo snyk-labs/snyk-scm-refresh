@@ -56,19 +56,28 @@ def passes_manifest_filter(path, skip_snyk_code=False):
 
     return passes_filter
 
-def get_gh_repo_status(snyk_gh_repo, github_token, github_enterprise=False):
+def get_gh_repo_status(snyk_gh_repo):
     """detect if repo still exists, has been removed, or renamed"""
-    repo_owner = snyk_gh_repo["owner"]
-    repo_name = snyk_gh_repo["name"]
+    repo_owner = snyk_gh_repo.full_name.split("/")[0]
+    repo_name = snyk_gh_repo.full_name.split("/")[1]
     response_message = ""
     repo_default_branch = ""
 
+    # print(f'snyk_gh_repo origin: {snyk_gh_repo.origin}')
+
+    if snyk_gh_repo.origin == "github":
+        github_token = common.GITHUB_TOKEN
+    elif snyk_gh_repo.origin == "github-enterprise":
+        github_token = common.GITHUB_ENTERPRISE_TOKEN
+
     headers = {"Authorization": "Bearer %s"}
     headers["Authorization"] = headers["Authorization"] % (github_token)
-    if not github_enterprise:
+    if snyk_gh_repo.origin == "github" or \
+        (snyk_gh_repo.origin == "github-enterprise" and \
+            common.USE_GHE_INTEGRATION_FOR_GH_CLOUD):
         request_url = f"https://api.github.com/repos/{snyk_gh_repo['full_name']}"
         # print("requestURL: " + requestURL)
-    else:
+    elif snyk_gh_repo.origin == "github-enterprise":
         request_url = f"https://{common.GITHUB_ENTERPRISE_HOST}" \
         f"/api/v3/repos/{snyk_gh_repo['full_name']}"
     try:
@@ -98,7 +107,7 @@ def get_gh_repo_status(snyk_gh_repo, github_token, github_enterprise=False):
                 repo_owner = ""
                 repo_name = ""
 
-            response_message = "Moved to %s" % repo_name
+            response_message = f"Moved to {repo_name}"
 
         repo_status = {
             "response_code": response.status_code,
@@ -130,7 +139,7 @@ def is_default_branch_renamed(snyk_gh_repo, new_branch, github_token, github_ent
     try:
         response = requests.get(url=request_url, allow_redirects=False, headers=headers)
 
-        if response.status_code == 301 or response.status_code == 302:
+        if response.status_code in (301, 302):
             print('redirect response url: ' + response.headers["Location"])
             if str(response.headers["Location"]).endswith(f"/{new_branch}"):
                 # print('the redirect is pointing to the new branch')

@@ -1,11 +1,13 @@
 """test suite for snyk_scm_refresh.py"""
+import os
 import pytest
 from snyk.models import Project
+import common
+from app.snyk_repo import SnykRepo
 
 from app.gh_repo import (
     get_gh_repo_status,
     passes_manifest_filter,
-
 )
 from app.utils.snyk_helper import get_snyk_projects_for_repo
 
@@ -27,34 +29,73 @@ class MockResponse:
         (404, "Not Found", "test_org/test_repo", None, None, "")
     ],
 )
-def test_get_gh_repo_status(mocker, status_code, response_message, repo, name, owner, default_branch):
+def test_get_gh_repo_status_github(mocker, status_code, response_message, repo, name, owner, default_branch):
 
     # TODO: assumes a successful redirect for the 301 case
     mocker.patch(
         "requests.get", side_effect=[MockResponse(status_code), MockResponse(200)]
     )
+    mocker.patch.dict(os.environ, {'GITHUB_ENTERPRISE_TOKEN': '1234', 'GITHUB_ENTERPRISE_HOST':common.GITHUB_CLOUD_API_HOST})
 
-    snyk_repo = {
-        "full_name": 'new_owner/new_repo',
-        "owner":'new_owner',
-        "name": 'new_repo',
-        "org_id": "1234-5678",
-        "gh_integration_id": "12345",
-        "branch_from_name": "",
-        "branch": "master"
-    }
+    snyk_repo_github = SnykRepo(
+        'new_owner/new_repo',
+        "1234-5678",
+        "new_owner",
+        "12345",
+        "github",
+        "master",
+        []
+    )
 
     repo_status = {
         "response_code": status_code,
         "response_message": response_message,
-        "repo_name": snyk_repo["name"],
-        "snyk_org_id": snyk_repo["org_id"],
-        "repo_owner": snyk_repo["owner"],
-        "repo_full_name": snyk_repo["full_name"],
+        "repo_name": snyk_repo_github["full_name"].split("/")[1],
+        "snyk_org_id": snyk_repo_github["org_id"],
+        "repo_owner": snyk_repo_github["full_name"].split("/")[0],
+        "repo_full_name": snyk_repo_github["full_name"],
         "repo_default_branch": default_branch
     }
 
-    assert get_gh_repo_status(snyk_repo, "test_token") == repo_status
+    assert get_gh_repo_status(snyk_repo_github) == repo_status
+
+@pytest.mark.parametrize(
+    "status_code, response_message, repo, name, owner, default_branch",
+    [
+        (200, "Match", "test_org/test_repo", "test_repo", "test_owner", "master"),
+        (301, "Moved to new_repo", "new_owner/new_repo", "new_repo", "new_owner", ""),
+        (404, "Not Found", "test_org/test_repo", None, None, "")
+    ],
+)
+def test_get_gh_repo_status_github_enterprise_cloud(mocker, status_code, response_message, repo, name, owner, default_branch):
+
+    # TODO: assumes a successful redirect for the 301 case
+    mocker.patch(
+        "requests.get", side_effect=[MockResponse(status_code), MockResponse(200)]
+    )
+    mocker.patch.dict(os.environ, {'GITHUB_ENTERPRISE_TOKEN': '1234', 'GITHUB_ENTERPRISE_HOST':common.GITHUB_CLOUD_API_HOST})
+
+    snyk_repo_github_enterprise = SnykRepo(
+        'new_owner/new_repo',
+        "1234-5678",
+        "new_owner",
+        "12345",
+        "github-enterprise",
+        "master",
+        []
+    )
+
+    repo_status = {
+        "response_code": status_code,
+        "response_message": response_message,
+        "repo_name": snyk_repo_github_enterprise["full_name"].split("/")[1],
+        "snyk_org_id": snyk_repo_github_enterprise["org_id"],
+        "repo_owner": snyk_repo_github_enterprise["full_name"].split("/")[0],
+        "repo_full_name": snyk_repo_github_enterprise["full_name"],
+        "repo_default_branch": default_branch
+    }
+
+    assert get_gh_repo_status(snyk_repo_github_enterprise) == repo_status
 
 def test_get_gh_repo_status_unauthorized(mocker):
     """ test handling unauthorized token """
@@ -62,18 +103,20 @@ def test_get_gh_repo_status_unauthorized(mocker):
         "requests.get", side_effect=[MockResponse(401)]
     )
 
-    snyk_repo = {
-        "full_name": 'test_org/test_repo',
-        "owner":'test_org',
-        "name": 'test_repo',
-        "org_id": "1234-5678",
-        "gh_integration_id": "12345",
-        "branch_from_name": "",
-        "branch": "master"
-    }
+    mocker.patch.dict(os.environ, {'GITHUB_TOKEN': 'test_token'})
+
+    snyk_repo = SnykRepo(
+        'test_org/test_repo',
+        "1234-5678",
+        "new_owner",
+        "12345",
+        "github",
+        "master",
+        []
+    )
 
     with pytest.raises(RuntimeError):
-        get_gh_repo_status(snyk_repo, "test_token")
+        get_gh_repo_status(snyk_repo)
 
 def test_get_snyk_project_for_repo():
     """ test collecting projects for a repo """

@@ -60,10 +60,7 @@ def run():
                   f"Processing {str(i+1)}/{str(len(snyk_repos))}")
 
         try:
-            if snyk_repo.origin == "github":
-                gh_repo_status = get_gh_repo_status(snyk_repo, common.GITHUB_TOKEN)
-            elif snyk_repo.origin == "github-enterprise":
-                gh_repo_status = get_gh_repo_status(snyk_repo, common.GITHUB_ENTERPRISE_TOKEN, True)
+            gh_repo_status = get_gh_repo_status(snyk_repo)
 
         except RuntimeError as err:
             raise RuntimeError("Failed to query GitHub repository!") from err
@@ -124,6 +121,7 @@ def run():
                           snyk_repo.full_name,
                           f"Checking {str(len(snyk_repo.snyk_projects))} " \
                           f"projects for any stale manifests")
+                # print(f"snyk repo projects: {snyk_repo.snyk_projects}")
                 deleted_projects = snyk_repo.delete_stale_manifests(common.ARGS.dry_run)
                 for project in deleted_projects:
                     if not common.ARGS.dry_run:
