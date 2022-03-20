@@ -1,6 +1,8 @@
 """utilities for github"""
+import logging
 import re
 import requests
+from app.models import GithubRepoStatus
 import common
 
 def get_repo_manifests(snyk_repo_name, origin, skip_snyk_code):
@@ -57,13 +59,15 @@ def passes_manifest_filter(path, skip_snyk_code=False):
     return passes_filter
 
 def get_gh_repo_status(snyk_gh_repo):
+    # pylint: disable=too-many-branches
     """detect if repo still exists, has been removed, or renamed"""
     repo_owner = snyk_gh_repo.full_name.split("/")[0]
     repo_name = snyk_gh_repo.full_name.split("/")[1]
     response_message = ""
+    response_status_code = ""
     repo_default_branch = ""
 
-    # print(f'snyk_gh_repo origin: {snyk_gh_repo.origin}')
+    # logging.debug(f"snyk_gh_repo origin: {snyk_gh_repo.origin}")
 
     if snyk_gh_repo.origin == "github":
         github_token = common.GITHUB_TOKEN
@@ -82,8 +86,10 @@ def get_gh_repo_status(snyk_gh_repo):
         f"/api/v3/repos/{snyk_gh_repo['full_name']}"
     try:
         response = requests.get(url=request_url, allow_redirects=False, headers=headers)
-        # print("response_code: %d" % response.status_code)
-        # print(f"response default branch -> {response.json()['default_branch']}")
+        # logging.debug("response_code: %d" % response.status_code)
+        # logging.debug(f"response default branch -> {response.json()['default_branch']}")
+
+        response_status_code = response.status_code
 
         if response.status_code == 200:
             response_message = "Match"
@@ -109,19 +115,23 @@ def get_gh_repo_status(snyk_gh_repo):
 
             response_message = f"Moved to {repo_name}"
 
-        repo_status = {
-            "response_code": response.status_code,
-            "response_message": response_message,
-            "repo_name": repo_name,
-            "snyk_org_id": snyk_gh_repo["org_id"],
-            "repo_owner": repo_owner,
-            "repo_full_name": f"{repo_owner}/{repo_name}",
-            "repo_default_branch": repo_default_branch
-        }
-
     except requests.exceptions.RequestException as err:
-        repo_status = err.response
+        # make sure it gets logged in log file when in debug mode
+        logging.debug(f"{err}")
 
+        response_status_code = "ERROR"
+        response_message = f"{err}"
+
+    finally:
+        repo_status = GithubRepoStatus(
+            response_status_code,
+            response_message,
+            repo_name,
+            snyk_gh_repo["org_id"],
+            repo_owner,
+            f"{repo_owner}/{repo_name}",
+            repo_default_branch
+        )
     return repo_status
 
 def is_default_branch_renamed(snyk_gh_repo, new_branch, github_token, github_enterprise=False):
