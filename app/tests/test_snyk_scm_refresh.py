@@ -10,7 +10,10 @@ from app.gh_repo import (
     get_gh_repo_status,
     passes_manifest_filter,
 )
-from app.utils.snyk_helper import get_snyk_projects_for_repo
+from app.utils.snyk_helper import (
+    get_snyk_projects_for_repo,
+    get_snyk_repos_from_snyk_projects
+)
 
 class MockResponse:
     """ mock response for github check """
@@ -118,6 +121,65 @@ def test_get_gh_repo_status_unauthorized(mocker):
 
     with pytest.raises(RuntimeError):
         get_gh_repo_status(snyk_repo)
+
+def test_get_snyk_repos_from_snyk_projects():
+    """ test generating unique repos from project list """
+
+    snyk_gh_projects = [
+    {
+        "id": "12345",
+        "name": "scotte-snyk/test-project-1:package.json",
+        "repo_full_name": "scotte-snyk/test-project-1",
+        "repo_owner": "scotte-snyk",
+        "repo_name": "test-project-1",
+        "manifest": "package.json",
+        "org_id": "12345",
+        "org_name": "scotte-snyk",
+        "origin": "github",
+        "type": "npm",
+        "integration_id": "66d7ebef-9b36-464f-889c-b92c9ef5ce12",
+        "branch_from_name": "",
+        "branch": "master"
+    },
+    {
+        "id": "12345",
+        "name": "scotte-snyk/test-project-2:package.json",
+        "repo_full_name": "scotte-snyk/test-project-2",
+        "repo_owner": "scotte-snyk",
+        "repo_name": "test-project-2",
+        "manifest": "package.json",
+        "org_id": "12345",
+        "org_name": "scotte-snyk",
+        "origin": "github",
+        "type": "npm",
+        "integration_id": "66d7ebef-9b36-464f-889c-b92c9ef5ce12",
+        "branch_from_name": "",
+        "branch": "master"
+    },
+    ]
+
+    snyk_repos_from_snyk_projects = [
+        SnykRepo(
+            'scotte-snyk/test-project-1',
+            "12345",
+            "scotte-snyk",
+            "66d7ebef-9b36-464f-889c-b92c9ef5ce12",
+            "github",
+            "master",
+            [snyk_gh_projects[0]]
+        ),
+        SnykRepo(
+            'scotte-snyk/test-project-2',
+            "12345",
+            "scotte-snyk",
+            "66d7ebef-9b36-464f-889c-b92c9ef5ce12",
+            "github",
+            "master",
+            [snyk_gh_projects[1]]
+        )
+    ]
+
+    assert str(get_snyk_repos_from_snyk_projects(snyk_gh_projects)) == str(snyk_repos_from_snyk_projects)
 
 def test_get_snyk_project_for_repo():
     """ test collecting projects for a repo """

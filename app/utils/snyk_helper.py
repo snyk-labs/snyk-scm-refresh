@@ -37,63 +37,43 @@ def get_snyk_repos_from_snyk_orgs(snyk_orgs, ARGS):
     snyk_repos = []
     snyk_projects = build_snyk_project_list(snyk_orgs, ARGS)
 
-    repo_projects = []
-
     # initialize to the first repo name
     num_projects = len(snyk_projects)
 
     if num_projects > 0:
-        curr_repo_name = snyk_projects[0]["repo_full_name"]
-        # print(f"curr repo name: {curr_repo_name}")
+        snyk_repos = get_snyk_repos_from_snyk_projects(snyk_projects)
 
-        for (i, project) in enumerate(snyk_projects):
-            #if i == num_projects-1:
-                # print(f"encountered base case")
-            #    snyk_repos.append(
-            #        SnykRepo(snyk_projects[i]["repo_full_name"],
-            #                 snyk_projects[i]["org_id"],
-            #                 snyk_projects[i]["org_name"],
-            #                 snyk_projects[i]["integration_id"],
-            #                 snyk_projects[i]["origin"],
-            #                 snyk_projects[i]["branch"],
-            #                 repo_projects)
-            #    )
+    return snyk_repos
 
-            # we encountered a new repo, or reached the end of the project list
-            if project["repo_full_name"] != curr_repo_name:
-                # print(f"encountered a new repo name: {project['repo_full_name']}")
-                # add repo to snyk_repos
-                snyk_repos.append(
-                    SnykRepo(snyk_projects[i-1]["repo_full_name"],
-                             snyk_projects[i-1]["org_id"],
-                             snyk_projects[i-1]["org_name"],
-                             snyk_projects[i-1]["integration_id"],
-                             snyk_projects[i-1]["origin"],
-                             snyk_projects[i-1]["branch"],
-                             repo_projects)
-                )
-                repo_projects = [project]
-                # print(f"setting repo_projects to: {repo_projects}")
+def get_snyk_repos_from_snyk_projects(snyk_projects):
+    """ Get list of unique repos built from an input of snyk projects"""
+    snyk_repos = []
+    # num_projects = len(snyk_projects)
+    curr_repo_name = ""
 
-                if i == num_projects-1:
-                    # print("encountered last project")
-                    snyk_repos.append(
-                        SnykRepo(snyk_projects[i]["repo_full_name"],
-                                 snyk_projects[i]["org_id"],
-                                 snyk_projects[i]["org_name"],
-                                 snyk_projects[i]["integration_id"],
-                                 snyk_projects[i]["origin"],
-                                 snyk_projects[i]["branch"],
-                                 repo_projects)
-                    )
+    repo_projects = []
+    for (i, project) in enumerate(snyk_projects):
 
-            else:
-                # add to project list for this repo
-                repo_projects.append(project)
-                # print(f"adding project: {project['manifest']}")
+        # we encountered a new repo
+        if project["repo_full_name"] != curr_repo_name:
+            # add repo to snyk_repos
+            snyk_repos.append(
+                SnykRepo(snyk_projects[i]["repo_full_name"],
+                         snyk_projects[i]["org_id"],
+                         snyk_projects[i]["org_name"],
+                         snyk_projects[i]["integration_id"],
+                         snyk_projects[i]["origin"],
+                         snyk_projects[i]["branch"],
+                         [x for x in snyk_projects \
+                             if x["repo_full_name"] == project["repo_full_name"]])
+            )
+            repo_projects = []
 
-            curr_repo_name = project["repo_full_name"]
-            # print(f"curr repo name set to: {curr_repo_name}")
+        else:
+            repo_projects.append(project)
+
+        curr_repo_name = project["repo_full_name"]
+
     return snyk_repos
 
 def build_snyk_project_list(snyk_orgs, ARGS):
