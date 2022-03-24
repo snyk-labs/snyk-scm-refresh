@@ -76,6 +76,12 @@ If GITHUB_TOKEN is set, your Github.com repos will processed
 
 If GITHUB_ENTERPRISE_TOKEN and GITHUB_ENTERPRISE_HOST are BOTH set, your Github Enterprise Server repos will be processed
 
+<blockquote>
+:information_source:
+If using the Snyk Github Enterprise Integration type for your Github.com repositories, then set GITHUB_ENTERPRISE_HOST=api.github.com
+</blockquote>
+<br/>
+
 ## Instructions
 Make sure to use a user *API Token* that has acess to the Snyk Orgs you need to process with the script.  A service account will *not* work for GitHub, which is the only SCM currently supported at this time.
 

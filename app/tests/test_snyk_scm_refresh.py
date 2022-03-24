@@ -4,6 +4,7 @@ import pytest
 from snyk.models import Project
 import common
 from app.snyk_repo import SnykRepo
+from app.models import GithubRepoStatus
 
 from app.gh_repo import (
     get_gh_repo_status,
@@ -47,15 +48,15 @@ def test_get_gh_repo_status_github(mocker, status_code, response_message, repo, 
         []
     )
 
-    repo_status = {
-        "response_code": status_code,
-        "response_message": response_message,
-        "repo_name": snyk_repo_github["full_name"].split("/")[1],
-        "snyk_org_id": snyk_repo_github["org_id"],
-        "repo_owner": snyk_repo_github["full_name"].split("/")[0],
-        "repo_full_name": snyk_repo_github["full_name"],
-        "repo_default_branch": default_branch
-    }
+    repo_status = GithubRepoStatus(
+        status_code,
+        response_message,
+        snyk_repo_github["full_name"].split("/")[1],
+        snyk_repo_github["org_id"],
+        snyk_repo_github["full_name"].split("/")[0],
+        snyk_repo_github["full_name"],
+        default_branch
+    )
 
     assert get_gh_repo_status(snyk_repo_github) == repo_status
 
@@ -85,15 +86,15 @@ def test_get_gh_repo_status_github_enterprise_cloud(mocker, status_code, respons
         []
     )
 
-    repo_status = {
-        "response_code": status_code,
-        "response_message": response_message,
-        "repo_name": snyk_repo_github_enterprise["full_name"].split("/")[1],
-        "snyk_org_id": snyk_repo_github_enterprise["org_id"],
-        "repo_owner": snyk_repo_github_enterprise["full_name"].split("/")[0],
-        "repo_full_name": snyk_repo_github_enterprise["full_name"],
-        "repo_default_branch": default_branch
-    }
+    repo_status = GithubRepoStatus(
+        status_code,
+        response_message,
+        snyk_repo_github_enterprise["full_name"].split("/")[1],
+        snyk_repo_github_enterprise["org_id"],
+        snyk_repo_github_enterprise["full_name"].split("/")[0],
+        snyk_repo_github_enterprise["full_name"],
+        default_branch
+    )
 
     assert get_gh_repo_status(snyk_repo_github_enterprise) == repo_status
 

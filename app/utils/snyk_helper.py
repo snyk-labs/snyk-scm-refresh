@@ -44,7 +44,7 @@ def get_snyk_repos_from_snyk_orgs(snyk_orgs, ARGS):
 
     if num_projects > 0:
         curr_repo_name = snyk_projects[0]["repo_full_name"]
-        print(f"curr repo name: {curr_repo_name}")
+        # print(f"curr repo name: {curr_repo_name}")
 
         for (i, project) in enumerate(snyk_projects):
             #if i == num_projects-1:
@@ -76,7 +76,7 @@ def get_snyk_repos_from_snyk_orgs(snyk_orgs, ARGS):
                 # print(f"setting repo_projects to: {repo_projects}")
 
                 if i == num_projects-1:
-                    print("encountered last project")
+                    # print("encountered last project")
                     snyk_repos.append(
                         SnykRepo(snyk_projects[i]["repo_full_name"],
                                  snyk_projects[i]["org_id"],
@@ -216,6 +216,8 @@ def import_manifests(org_id, repo_full_name, integration_id, files=[]) -> Import
             except snyk.errors.SnykHTTPError as err_retry:
                 print(f"Still failed after retry with {str(err_retry.code)}!")
                 raise
+        else:
+            raise
     return ImportStatus(re.search('org/.+/integrations/.+/import/(.+)',
                                   response.headers['Location']).group(1),
                         response.headers['Location'],
