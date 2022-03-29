@@ -32,6 +32,17 @@ class SnykRepo():
         self.origin = origin
         self.branch = branch
         self.snyk_projects = snyk_projects
+
+    def __repr__(self):
+        return (
+            f"{self.full_name}" + "\n"
+            f"{self.org_id}" + "\n"
+            f"{self.org_name}" + "\n"
+            f"{self.integration_id}" + "\n"
+            f"{self.origin}" + "\n"
+            f"{self.branch}" + "\n"
+            f"{self.snyk_projects}")
+
     def __getitem__(self, item):
         return self.__dict__[item]
 
