@@ -59,7 +59,7 @@ defaults + snyk code enable: `./snyk_scm_refresh.py --org-id=12345 --code=on`
 
 ## Dependencies
 ```
-pip install -r  requirements.txt
+pip install -r requirements.txt
 ```
 or
 ```
@@ -82,6 +82,11 @@ If using the Snyk Github Enterprise Integration type for your Github.com reposit
 </blockquote>
 <br/>
 
+### Getting a GitHub token
+
+1. In GitHub.com browse: https://github.com/settings/tokens/new. Or in GitHub Enterprise select your user icon (top-right), then 'Settings', then 'Developer settings', then 'Personal access tokens'.
+2. Scopes - Public repos do not need a scope. If you want to scan private repos, then you'll need to enable this scope: `repo` (Full control of private repositories)
+
 ## Instructions
 Make sure to use a user *API Token* that has acess to the Snyk Orgs you need to process with the script.  A service account will *not* work for GitHub, which is the only SCM currently supported at this time.
 
@@ -89,9 +94,9 @@ Ensure that your GITHUB_TOKEN or GITHUB_ENTERPRISE_TOKEN has access to the repos
 If unsure, try one org at a time with `--org-id`
 
 
-**Recommended:** 
+**Recommended:**
 This tool will delete projects from Snyk that are detected as stale or have since been renamed
-  
+
 Use the `--dry-run` option to verify the execution plan for the first run
 
   Each run generates a set of output files:
