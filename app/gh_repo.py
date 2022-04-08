@@ -5,6 +5,12 @@ import requests
 from app.models import GithubRepoStatus
 import common
 
+# suppess InsecureRequestWarning when using --skip-scm-validation option
+# due to pylint bug
+# https://github.com/PyCQA/pylint/issues/4584)
+# pylint: disable=no-member
+requests.packages.urllib3.disable_warnings()
+
 def get_repo_manifests(snyk_repo_name, origin, skip_snyk_code):
     """retrieve list of all supported manifests in a given github repo"""
     manifests = []
@@ -85,7 +91,10 @@ def get_gh_repo_status(snyk_gh_repo):
         request_url = f"https://{common.GITHUB_ENTERPRISE_HOST}" \
         f"/api/v3/repos/{snyk_gh_repo['full_name']}"
     try:
-        response = requests.get(url=request_url, allow_redirects=False, headers=headers)
+        response = requests.get(url=request_url,
+                                allow_redirects=False,
+                                headers=headers,
+                                verify=common.VERIFY_TLS)
         # logging.debug("response_code: %d" % response.status_code)
         # logging.debug(f"response default branch -> {response.json()['default_branch']}")
 
@@ -103,7 +112,9 @@ def get_gh_repo_status(snyk_gh_repo):
 
         elif response.status_code == 301:
             follow_response = requests.get(
-                url=response.headers["Location"], headers=headers
+                url=response.headers["Location"],
+                headers=headers,
+                verify=common.VERIFY_TLS
             )
             if follow_response.status_code == 200:
                 repo_new_full_name = follow_response.json()["full_name"]
