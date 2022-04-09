@@ -25,21 +25,24 @@ For repos with at least 1 project already in Snyk:
 
 ## Usage
 ```
-usage: snyk_scm_refresh.py [-h] [--org-id ORG_ID] [--repo-name REPO_NAME] [--sca {on,off}] 
-       [--container {on,off}] [--iac {on,off}] [--code {on,off}] [--dry-run] [--debug]
+usage: snyk_scm_refresh.py [-h] [--org-id ORG_ID] [--repo-name REPO_NAME] [--sca {on,off}]
+                           [--container {on,off}] [--iac {on,off}] [--code {on,off}] [--dry-run]
+                           [--skip-scm-validation] [--debug]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --org-id ORG_ID       The Snyk Organisation Id found in Organization > Settings. 
-                        If omitted, process all orgs the Snyk user has access to.
+  --org-id ORG_ID       The Snyk Organisation Id found in Organization > Settings. If omitted,
+                        process all orgs the Snyk user has access to.
   --repo-name REPO_NAME
-                        The full name of the repo to process (e.g. githubuser/githubrepo). 
-                        If omitted, process all repos in the Snyk org.
+                        The full name of the repo to process (e.g. githubuser/githubrepo). If
+                        omitted, process all repos in the Snyk org.
   --sca {on,off}        scan for SCA manifests (on by default)
   --container {on,off}  scan for container projects, e.g. Dockerfile (on by default)
   --iac {on,off}        scan for IAC manifests (experimental, off by default)
   --code {on,off}       create code analysis if not present (experimental, off by default)
   --dry-run             Simulate processing of the script without making changes to Snyk
+  --skip-scm-validation
+                        Skip validation of the TLS certificate used by the SCM
   --debug               Write detailed debug data to snyk_scm_refresh.log for troubleshooting
 ```
 
@@ -59,7 +62,7 @@ defaults + snyk code enable: `./snyk_scm_refresh.py --org-id=12345 --code=on`
 
 ## Dependencies
 ```
-pip install -r  requirements.txt
+pip install -r requirements.txt
 ```
 or
 ```
@@ -82,16 +85,27 @@ If using the Snyk Github Enterprise Integration type for your Github.com reposit
 </blockquote>
 <br/>
 
+### Getting a GitHub token
+
+1. In GitHub.com browse: https://github.com/settings/tokens/new. Or in GitHub Enterprise select your user icon (top-right), then 'Settings', then 'Developer settings', then 'Personal access tokens'.
+2. Scopes - Public repos do not need a scope. If you want to scan private repos, then you'll need to enable this scope: `repo` (Full control of private repositories)
+
+## Handling self-signed certificates
+This tool uses the python requests library, therefore you can point [REQUESTS_CA_BUNDLE](https://docs.python-requests.org/en/master/user/advanced/#ssl-cert-verification) environment variable to the location of your cert bundle
+
+`export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt`
+
+If you are not able to validate the self-signed certificate, you may skip validation by providing the `--skip-scm-validation` option. 
+
 ## Instructions
-Make sure to use a user *API Token* that has acess to the Snyk Orgs you need to process with the script.  A service account will *not* work for GitHub, which is the only SCM currently supported at this time.
+Make sure to use a user *API Token* that has access to the Snyk Orgs you need to process with the script.  A service account will *not* work for GitHub, which is the only SCM currently supported at this time.
 
 Ensure that your GITHUB_TOKEN or GITHUB_ENTERPRISE_TOKEN has access to the repos contained in the Snyk Orgs in scope
 If unsure, try one org at a time with `--org-id`
 
-
-**Recommended:** 
+**Recommended:**
 This tool will delete projects from Snyk that are detected as stale or have since been renamed
-  
+
 Use the `--dry-run` option to verify the execution plan for the first run
 
   Each run generates a set of output files:
