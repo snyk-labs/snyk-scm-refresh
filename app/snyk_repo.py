@@ -68,6 +68,7 @@ class SnykRepo():
         gh_repo_manifests = get_repo_manifests(self.full_name, self.origin, self.has_snyk_code())
 
         for gh_repo_manifest in gh_repo_manifests:
+            #print(f"checking to import: {gh_repo_manifest}")
             if gh_repo_manifest not in {sp['manifest'] for sp in self.snyk_projects}:
                 files.append(dict({"path": gh_repo_manifest}))
 
