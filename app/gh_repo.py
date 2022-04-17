@@ -3,7 +3,10 @@ import logging
 import re
 import requests
 from app.models import GithubRepoStatus
+from typing import List
 import common
+from github.GitTreeElement import GitTreeElement
+import subprocess
 
 # suppess InsecureRequestWarning when using --skip-scm-validation option
 # due to pylint bug
@@ -11,31 +14,99 @@ import common
 # pylint: disable=no-member
 requests.packages.urllib3.disable_warnings()
 
+state={
+    "tree_already_retrieved": False,
+    "manifests": []
+}
+
+def get_git_tree_from_clone(gh_repo):
+    """ 
+    get git tree for large repos by performing
+    a shallow clone 'git clone --depth 1'
+    """
+    
+    tree_full_paths = []
+
+    # check if git exists on the system
+    check_git = subprocess.run(["command", "-v", "git"], check=True, stdout=subprocess.DEVNULL)
+
+    name = gh_repo.name
+    clone_url = gh_repo.clone_url
+    default_branch = gh_repo.default_branch
+
+    print(f"  - shallow cloning {name} from {clone_url} to /tmp")
+    
+    # clone the repo locally
+    subprocess.run(["rm", "-fr", f"/tmp/{name}"], check=True)
+    subprocess.run(["git", "clone", "--depth", "1", clone_url], check=True, cwd="/tmp")
+    
+    git_tree = subprocess.run(
+        [
+            "git", 
+            "ls-tree",
+             "-r", 
+             default_branch
+        ],
+        capture_output=True,
+        text=True,
+        cwd=f"/tmp/{name}"
+    )
+
+    print("  - Loading tree from local git structure")
+
+    for line in git_tree.stdout.splitlines():
+        sha, path = [line.split()[i] for i in (2, 3)]
+        tree_full_paths.append({
+            "sha": sha,
+            "path": path
+        })
+            
+    return tree_full_paths
+
 def get_repo_manifests(snyk_repo_name, origin, skip_snyk_code):
     """retrieve list of all supported manifests in a given github repo"""
-    manifests = []
-    try:
-        if origin == 'github':
-            gh_repo = common.gh_client.get_repo(snyk_repo_name)
-        elif origin == 'github-enterprise':
-            gh_repo = common.gh_enterprise_client.get_repo(snyk_repo_name)
-    # pylint: disable=bare-except
-    except:
-        if origin == 'github':
-            gh_repo = common.gh_enterprise_client.get_user().get_repo(snyk_repo_name)
-        elif origin == 'github-enterprise':
-            gh_repo = common.gh_enterprise_client.get_user().get_repo(snyk_repo_name)
 
-    contents = gh_repo.get_git_tree(gh_repo.default_branch, True).tree
+    if state['tree_already_retrieved']:
+        return state['manifests']
+    else:
+        try:
+            if origin == 'github':
+                gh_repo = common.gh_client.get_repo(snyk_repo_name)
+            elif origin == 'github-enterprise':
+                gh_repo = common.gh_enterprise_client.get_repo(snyk_repo_name)
+        # pylint: disable=bare-except
+        except:
+            if origin == 'github':
+                gh_repo = common.gh_client.get_user().get_repo(snyk_repo_name)
+            elif origin == 'github-enterprise':
+                gh_repo = common.gh_enterprise_client.get_user().get_repo(snyk_repo_name)
+    
+        tree_response = gh_repo.get_git_tree(gh_repo.default_branch, True)
+        contents = tree_response.tree
+        is_truncated_str = tree_response._rawData['truncated']
+    
+        if is_truncated_str:
+            # repo too large to get try via API, just clone it
+            print(f"- Large repo detected, falling back to cloning. This may take a few minutes ...")
+            contents = get_git_tree_from_clone(gh_repo)
+            # print(f"tree contents: {contents}")
+    
+        while contents:
+            tree_element = contents.pop(0)
+            # print(f"tree_element: {tree_element}")
+            full_path = {
+                "sha": tree_element['sha'],
+                "path": tree_element['path']
+            }
 
-    while contents:
-        file_content = contents.pop(0)
-        if passes_manifest_filter(file_content.path, skip_snyk_code):
-            manifests.append(file_content.path)
-        if re.match(common.MANIFEST_PATTERN_CODE, file_content.path):
-            skip_snyk_code = True
-    #print(manifests)
-    return manifests
+            if passes_manifest_filter(full_path['path'], skip_snyk_code):
+                #print(f"appending to manifests to check")
+                state['manifests'].append(full_path['path'])
+            if re.match(common.MANIFEST_PATTERN_CODE, full_path['path']):
+                skip_snyk_code = True
+    
+    state['tree_already_retrieved'] = True
+    return state['manifests']
 
 def passes_manifest_filter(path, skip_snyk_code=False):
     """ check if given path should be imported based
