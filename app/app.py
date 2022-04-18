@@ -135,7 +135,7 @@ def run():
 
                 app_print(snyk_repo.org_name,
                           snyk_repo.full_name,
-                          "Looking for new manifests in code repository")
+                          "Checking for new manifests in source tree")
 
                 #if not common.ARGS.dry_run:
                 projects_import = snyk_repo.add_new_manifests(common.ARGS.dry_run)
