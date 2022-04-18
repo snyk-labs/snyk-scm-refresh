@@ -90,7 +90,7 @@ If using the Snyk Github Enterprise Integration type for your Github.com reposit
 1. In GitHub.com browse: https://github.com/settings/tokens/new. Or in GitHub Enterprise select your user icon (top-right), then 'Settings', then 'Developer settings', then 'Personal access tokens'.
 2. Scopes - Public repos do not need a scope. If you want to scan private repos, then you'll need to enable this scope: `repo` (Full control of private repositories)
 
-## Handling self-signed certificates
+### Handling self-signed certificates
 This tool uses the python requests library, therefore you can point [REQUESTS_CA_BUNDLE](https://docs.python-requests.org/en/master/user/advanced/#ssl-cert-verification) environment variable to the location of your cert bundle
 
 `export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt`
@@ -120,3 +120,17 @@ Use the `--dry-run` option to verify the execution plan for the first run
 | _updated-project-branches.csv | projects with updated default branch  |
 | _update-project-branches-errors.csv | projects that had an error attempting to update default branch |
 | _repos-skipped-on-error.csv | repos skipped due to import error |
+
+## Handling of large repositories
+The primary method used by this tool to retrieve the GIT tree from each repository for the basis of comparison is via the Github API.  
+For sufficiently large repositories, though, Github truncates the API response.  When a truncated Github response is detected when retrieving the GIT tree,
+this tool will fall back on using the local `git` if available and configured to perform a shallow clone of the repository's default branch in order to build the tree.
+
+It will use /tmp to perform the `git clone` and then capture the output of `git ls-tree -r`
+
+When this situation occurs, you will see the following in the console:
+```
+Large repo detected, falling back to cloning. This may take a few minutes ...
+```
+
+The truncated GIT tree response is described [here](https://docs.github.com/en/rest/reference/git#get-a-tree).  The last [known limits](https://github.community/t/github-get-tree-api-limits-and-recursivity/1300/2) are: 100,000 files or 7 MB of response data, whichever is first.

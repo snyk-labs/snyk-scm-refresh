@@ -40,6 +40,8 @@ def get_git_tree_from_clone(gh_repo):
     subprocess.run(["rm", "-fr", f"/tmp/{name}"], check=True)
     subprocess.run(["git", "clone", "--depth", "1", clone_url], check=True, cwd="/tmp")
     
+    print("  - Loading tree from local git structure")
+
     git_tree = subprocess.run(
         [
             "git", 
@@ -52,9 +54,10 @@ def get_git_tree_from_clone(gh_repo):
         cwd=f"/tmp/{name}"
     )
 
-    print("  - Loading tree from local git structure")
+    git_tree_lines = git_tree.stdout.splitlines()
+    print(f"  - found {len(git_tree_lines)} tree items ...")
 
-    for line in git_tree.stdout.splitlines():
+    for line in git_tree_lines:
         sha, path = [line.split()[i] for i in (2, 3)]
         tree_full_paths.append({
             "sha": sha,
@@ -67,8 +70,10 @@ def get_repo_manifests(snyk_repo_name, origin, skip_snyk_code):
     """retrieve list of all supported manifests in a given github repo"""
 
     if state['tree_already_retrieved']:
+        state['tree_already_retrieved'] = False
         return state['manifests']
     else:
+        state['manifests'] = []
         try:
             if origin == 'github':
                 gh_repo = common.gh_client.get_repo(snyk_repo_name)
