@@ -84,19 +84,25 @@ def get_repo_manifests(snyk_repo_name, origin, skip_snyk_code):
         tree_response = gh_repo.get_git_tree(gh_repo.default_branch, True)
         contents = tree_response.tree
         is_truncated_str = tree_response._rawData['truncated']
-    
+
         if is_truncated_str:
             # repo too large to get try via API, just clone it
-            print(f"- Large repo detected, falling back to cloning. This may take a few minutes ...")
+            print(f"  - Large repo detected, falling back to cloning. This may take a few minutes ...")
             contents = get_git_tree_from_clone(gh_repo)
             # print(f"tree contents: {contents}")
     
         while contents:
             tree_element = contents.pop(0)
             # print(f"tree_element: {tree_element}")
+            if is_truncated_str:
+                tree_element_sha = tree_element['sha']
+                tree_element_path = tree_element['path']
+            else:
+                tree_element_sha = tree_element.sha
+                tree_element_path = tree_element.path
             full_path = {
-                "sha": tree_element['sha'],
-                "path": tree_element['path']
+                "sha": tree_element_sha,
+                "path": tree_element_path
             }
 
             if passes_manifest_filter(full_path['path'], skip_snyk_code):
