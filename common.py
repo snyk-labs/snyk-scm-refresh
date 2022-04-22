@@ -61,6 +61,10 @@ UPDATE_PROJECT_BRANCHES_ERRORS_FILE = open(
     "%s_update-project-branches-errors.csv" % LOG_PREFIX, "w"
 )
 UPDATE_PROJECT_BRANCHES_ERRORS_FILE.write("org,project_name,project_id,new_branch\n")
+LARGE_REPOS_AUDIT_RESULTS_FILE = open(
+    "%s_large-repos-audit-results.csv" % LOG_PREFIX, "w"
+)
+LARGE_REPOS_AUDIT_RESULTS_FILE.write("org,repo,is_large\n")
 
 PENDING_REMOVAL_MAX_CHECKS = 45
 PENDING_REMOVAL_CHECK_INTERVAL = 20
@@ -120,6 +124,13 @@ def parse_command_line_args():
     parser.add_argument(
         "--skip-scm-validation",
         help="Skip validation of the TLS certificate used by the SCM",
+        required=False,
+        action="store_true",
+    )
+    parser.add_argument(
+        "--audit-large-repos",
+        help="only query github tree api to see if the response is truncated and \
+            log the result. These are the repos that would have be cloned via this tool",
         required=False,
         action="store_true",
     )

@@ -9,14 +9,17 @@ import common
 from app.models import ImportStatus
 from app.gh_repo import (
     get_gh_repo_status,
-    is_default_branch_renamed
+    is_default_branch_renamed,
+    is_gh_repo_truncated,
+    get_git_tree_from_api
 )
 from app.utils.snyk_helper import (
     get_snyk_repos_from_snyk_orgs,
     app_print,
     process_import_status_checks,
     import_manifests,
-    log_potential_delete
+    log_potential_delete,
+    log_audit_large_repo_result
 )
 
 def run():
@@ -75,6 +78,19 @@ def run():
             log_potential_delete(snyk_repo.org_name, snyk_repo.full_name)
 
         elif gh_repo_status.response_code == 200: # project exists and has not been renamed
+            # if --audit-large-repos is on
+            if common.ARGS.audit_large_repos:
+                is_truncated_str = \
+                    is_gh_repo_truncated(
+                        get_git_tree_from_api(snyk_repo.full_name, snyk_repo.origin)
+                    )
+                log_audit_large_repo_result(
+                    snyk_repo.org_name,
+                    snyk_repo.full_name,
+                    str(bool(is_truncated_str))
+                )
+                # move to next repo without processing the rest of the code
+                continue
             # snyk has the wrong branch, re-import
             if gh_repo_status.repo_default_branch != snyk_repo.branch:
                 app_print(snyk_repo.org_name,

@@ -43,6 +43,8 @@ optional arguments:
   --dry-run             Simulate processing of the script without making changes to Snyk
   --skip-scm-validation
                         Skip validation of the TLS certificate used by the SCM
+  --audit-large-repos   only query github tree api to see if the response is truncated and 
+                        log the result. These are the repos that would have be cloned via this tool
   --debug               Write detailed debug data to snyk_scm_refresh.log for troubleshooting
 ```
 
@@ -136,3 +138,10 @@ Large repo detected, falling back to cloning. This may take a few minutes ...
 ![image](https://user-images.githubusercontent.com/59706011/163878251-e874b073-eab6-48c0-9bd3-ea995005e4a9.png)
 
 The truncated GIT tree response is described [here](https://docs.github.com/en/rest/reference/git#get-a-tree).  The last [known limits](https://github.community/t/github-get-tree-api-limits-and-recursivity/1300/2) are: 100,000 files or 7 MB of response data, whichever is first.
+
+### Auditing which repos are considered large
+In order to detect which repositories in snyk are subject the tree truncation issue mentioned above, there is another available option `--audit-large-repos`.
+This will only query the git tree via API and look for a truncated response, and then log the results to a file `snyk-scm-refresh_large-repos-audit-results.csv`
+
+To find all the repos based on a Snyk org, use the `--org-id` parameter in conjunction with `--audit-large-repos`
+Optionally you can also supply a repo name to check a single repo by also supplying the `--repo-name` filter.
