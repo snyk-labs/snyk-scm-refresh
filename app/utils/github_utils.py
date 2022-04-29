@@ -3,6 +3,7 @@ methods for creating github or
 github enterprise clients
 """
 from github import Github
+import common
 
 # pylint: disable=invalid-name
 def create_github_client(GITHUB_TOKEN, VERIFY_TLS):
@@ -23,3 +24,22 @@ def create_github_enterprise_client(GITHUB_ENTERPRISE_TOKEN, GITHUB_ENTERPRISE_H
         raise RuntimeError(
             "Failed to initialize GitHub client because GITHUB_ENTERPRISE_TOKEN is not set!"
         ) from err
+
+def get_github_client(origin):
+    """ get the right github client depending on intergration type """
+    #pylint: disable=no-else-return
+    if origin == 'github':
+        return common.gh_client
+    elif origin == 'github-enterprise':
+        return common.gh_enterprise_client
+    else:
+        raise Exception(f"could not get github client for type: {origin}")
+
+def get_github_repo(gh_client, repo_name):
+    """ get a github repo by name """
+    try:
+        return gh_client.get_repo(repo_name)
+    # pylint: disable=bare-except
+    except:
+        return gh_client.get_user().get_repo(repo_name)
+ 
