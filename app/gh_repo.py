@@ -1,9 +1,14 @@
 """utilities for github"""
 import logging
 import re
+import sys
 import subprocess
 import requests
 from app.models import GithubRepoStatus
+from app.utils.github_utils import (
+    get_github_client,
+    get_github_repo
+)
 import common
 
 
@@ -19,13 +24,16 @@ state = {
     "manifests": []
 }
 
-def get_git_tree_from_clone(gh_repo):
+def get_git_tree_from_clone(repo_name, origin):
     """
     get git tree for large repos by performing
     a shallow clone 'git clone --depth 1'
     """
 
     tree_full_paths = []
+
+    gh_client = get_github_client(origin)
+    gh_repo = get_github_repo(gh_client, repo_name)
 
     # check if git exists on the system
     subprocess.run(["command", "-v", "git"], check=True, stdout=subprocess.DEVNULL)
@@ -34,10 +42,20 @@ def get_git_tree_from_clone(gh_repo):
     clone_url = gh_repo.clone_url
     default_branch = gh_repo.default_branch
 
-    print(f"  - shallow cloning {name} from {clone_url} to /tmp")
+    GIT_CLONE_PATH = f"{common.GIT_CLONE_TEMP_DIR}/{name}"
+
+    # check that GIT_CLONE_PATH is set safely for deletion
+    if re.match(f'{common.GIT_CLONE_TEMP_DIR}/.+', GIT_CLONE_PATH) and \
+        re.match(rf'\/.+\/.+', GIT_CLONE_PATH):
+        pass
+    else:
+        sys.exit(f"could not determine that the temp cloning directory"
+                 f"{GIT_CLONE_PATH} was set properly, exiting...")
+
+    print(f"  - shallow cloning {name} from {clone_url} to {GIT_CLONE_PATH}")
 
     # clone the repo locally
-    subprocess.run(["rm", "-fr", f"{common.GIT_CLONE_TEMP_DIR}/{name}"], check=True)
+    subprocess.run(["rm", "-fr", f"{GIT_CLONE_PATH}"], check=True)
     subprocess.run(
         ["git", "clone", "--depth", "1", clone_url],
         check=True,
@@ -56,8 +74,11 @@ def get_git_tree_from_clone(gh_repo):
         capture_output=True,
         check=True,
         text=True,
-        cwd=f"{common.GIT_CLONE_TEMP_DIR}/{name}"
+        cwd=f"{GIT_CLONE_PATH}"
     )
+
+    print(f"  - removing cloned files in /tmp...")
+    subprocess.run(["rm", "-fr", f"{GIT_CLONE_PATH}"], check=True)
 
     git_tree_lines = git_tree.stdout.splitlines()
     print(f"  - found {len(git_tree_lines)} tree items ...")
@@ -71,6 +92,18 @@ def get_git_tree_from_clone(gh_repo):
 
     return tree_full_paths
 
+def is_gh_repo_truncated(gh_tree_response) -> bool:
+    """ check if repo is truncated """
+    #pylint: disable=protected-access
+    return gh_tree_response._rawData['truncated']
+
+def get_git_tree_from_api(repo_name, origin):
+    """ get git tree for repo via API call """
+    gh_client = get_github_client(origin)
+    gh_repo = get_github_repo(gh_client, repo_name)
+
+    return gh_repo.get_git_tree(gh_repo.default_branch, True)
+
 def get_repo_manifests(snyk_repo_name, origin, skip_snyk_code):
     """retrieve list of all supported manifests in a given github repo"""
 
@@ -79,29 +112,18 @@ def get_repo_manifests(snyk_repo_name, origin, skip_snyk_code):
         return state['manifests']
 
     state['manifests'] = []
-    try:
-        if origin == 'github':
-            gh_repo = common.gh_client.get_repo(snyk_repo_name)
-        elif origin == 'github-enterprise':
-            gh_repo = common.gh_enterprise_client.get_repo(snyk_repo_name)
-    # pylint: disable=bare-except
-    except:
-        if origin == 'github':
-            gh_repo = common.gh_client.get_user().get_repo(snyk_repo_name)
-        elif origin == 'github-enterprise':
-            gh_repo = common.gh_enterprise_client.get_user().get_repo(snyk_repo_name)
 
-    tree_response = gh_repo.get_git_tree(gh_repo.default_branch, True)
+    tree_response = get_git_tree_from_api(snyk_repo_name, origin)
+
     contents = tree_response.tree
 
-    #pylint: disable=protected-access
-    is_truncated_str = tree_response._rawData['truncated']
+    is_truncated_str = is_gh_repo_truncated(tree_response)
 
     if is_truncated_str:
         # repo too large to get try via API, just clone it
         print(f"  - Large repo detected, falling back to cloning. "
               f"This may take a few minutes ...")
-        contents = get_git_tree_from_clone(gh_repo)
+        contents = get_git_tree_from_clone(snyk_repo_name, origin)
         # print(f"tree contents: {contents}")
 
     while contents:

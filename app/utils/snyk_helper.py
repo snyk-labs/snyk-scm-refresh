@@ -32,6 +32,13 @@ def log_update_project_branch_error(org_name, project_id, project_name, new_bran
         f"{project_id},"
         f"{new_branch}\n")
 
+def log_audit_large_repo_result(org_name: str, repo_name: str, is_large: str):
+    """ Log audit large repo result """
+    common.LARGE_REPOS_AUDIT_RESULTS_FILE.write(
+        f"{org_name},"
+        f"{repo_name},"
+        f"{is_large}\n")
+
 def get_snyk_repos_from_snyk_orgs(snyk_orgs, ARGS):
     """Build list of repositories from a given list of Snyk orgs"""
     snyk_repos = []

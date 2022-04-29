@@ -10,7 +10,10 @@ from app import run
 
 if __name__ == "__main__":
 
-    if common.ARGS.dry_run:
+    if common.ARGS.audit_large_repos:
+        print("\n****** AUDIT LARGE REPOS MODE ******\n")
+        print(f"check {common.LARGE_REPOS_AUDIT_RESULTS_FILE.name} after script completes\n")
+    elif common.ARGS.dry_run:
         print("\n****** DRY-RUN MODE ******\n")
     for arg in vars(common.ARGS):
         if any(arg in x for x in ['sca', 'container', 'iac', 'code']):
