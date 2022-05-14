@@ -79,6 +79,10 @@ def run():
 
         elif gh_repo_status["response_code"] == 200: # project exists and has not been renamed
             # snyk has the wrong branch, re-import
+            if gh_repo_status["archived"] == True:
+                app_print(snyk_repo.org_name,
+                          snyk_repo.full_name,
+                          f"Repository is archieved")
             if gh_repo_status["repo_default_branch"] != snyk_repo.branch:
                 app_print(snyk_repo.org_name,
                           snyk_repo.full_name,

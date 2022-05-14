@@ -79,6 +79,7 @@ def get_gh_repo_status(snyk_gh_repo, github_token, github_enterprise=False):
         if response.status_code == 200:
             response_message = "Match"
             repo_default_branch = response.json()['default_branch']
+            archived = response.json()['archived']
 
         elif response.status_code == 404:
             response_message = "Not Found"
@@ -107,7 +108,8 @@ def get_gh_repo_status(snyk_gh_repo, github_token, github_enterprise=False):
             "snyk_org_id": snyk_gh_repo["org_id"],
             "repo_owner": repo_owner,
             "repo_full_name": f"{repo_owner}/{repo_name}",
-            "repo_default_branch": repo_default_branch
+            "repo_default_branch": repo_default_branch,
+            "archived": archived
         }
 
     except requests.exceptions.RequestException as err:
