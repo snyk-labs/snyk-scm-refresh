@@ -131,7 +131,17 @@ def run():
                 else:
                     app_print(snyk_repo.org_name,
                               snyk_repo.full_name,
-                              "Branch was just renamed, leaving as-is")
+                              "Default branch was renamed, updating project branch")
+                    updated_projects = snyk_repo.update_branch(
+                    gh_repo_status.repo_default_branch,
+                    common.ARGS.dry_run)
+                    for project in updated_projects:
+                        if not common.ARGS.dry_run:
+                            app_print(snyk_repo.org_name,
+                                    snyk_repo.full_name,
+                                    f"Monitored branch set to " \
+                                    f"{gh_repo_status.repo_default_branch} " \
+                                    f"for: {project['manifest']}")
             else: #find deltas
                 app_print(snyk_repo.org_name,
                           snyk_repo.full_name,
