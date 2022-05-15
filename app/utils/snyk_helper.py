@@ -337,7 +337,7 @@ def process_import_status_checks(import_status_checks):
 def update_project_branch(project_id, project_name, org_id, new_branch_name):
     """ update snyk project monitored branch """
     org = common.snyk_client.organizations.get(org_id)
-    path = "org/{org.id}/project/{project_id}"
+    path = f"org/{org.id}/project/{project_id}"
 
     payload = {
         "branch": new_branch_name
