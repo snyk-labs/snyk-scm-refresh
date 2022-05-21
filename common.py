@@ -129,6 +129,13 @@ def parse_command_line_args():
         required=False,
         action="store_true",
     )
+    parser.add_argument(
+        "--clean-archived",
+        help="wheter to delete manifests of archived respos",
+        required=False,
+        default=False,
+        choices=['on', 'off']
+    )
 
     return parser.parse_args()
 
@@ -145,3 +152,4 @@ PROJECT_TYPE_ENABLED_SCA = toggle_to_bool(ARGS.sca)
 PROJECT_TYPE_ENABLED_CONTAINER = toggle_to_bool(ARGS.container)
 PROJECT_TYPE_ENABLED_IAC = toggle_to_bool(ARGS.iac)
 PROJECT_TYPE_ENABLED_CODE = toggle_to_bool(ARGS.code)
+CLEAN_ARCHIVED = toggle_to_bool(ARGS.clean_archived)

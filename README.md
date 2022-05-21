@@ -21,18 +21,19 @@ usage: snyk_scm_refresh.py [-h] [--org-id ORG_ID] [--repo-name REPO_NAME] [--sca
        [--container {on,off}] [--iac {on,off}] [--code {on,off}] [--dry-run] [--debug]
 
 optional arguments:
-  -h, --help            show this help message and exit
-  --org-id ORG_ID       The Snyk Organisation Id found in Organization > Settings. 
-                        If omitted, process all orgs the Snyk user has access to.
+  -h, --help                show this help message and exit
+  --org-id ORG_ID           The Snyk Organisation Id found in Organization > Settings. 
+                            If omitted, process all orgs the Snyk user has access to.
   --repo-name REPO_NAME
-                        The full name of the repo to process (e.g. githubuser/githubrepo). 
-                        If omitted, process all repos in the Snyk org.
-  --sca {on,off}        scan for SCA manifests (on by default)
-  --container {on,off}  scan for container projects, e.g. Dockerfile (on by default)
-  --iac {on,off}        scan for IAC manifests (experimental, off by default)
-  --code {on,off}       create code analysis if not present (experimental, off by default)
-  --dry-run             Simulate processing of the script without making changes to Snyk
-  --debug               Write detailed debug data to snyk_scm_refresh.log for troubleshooting
+                            The full name of the repo to process (e.g. githubuser/githubrepo). 
+                            If omitted, process all repos in the Snyk org.
+  --sca {on,off}            scan for SCA manifests (on by default)
+  --container {on,off}      scan for container projects, e.g. Dockerfile (on by default)
+  --iac {on,off}            scan for IAC manifests (experimental, off by default)
+  --code {on,off}           create code analysis if not present (experimental, off by default)
+  --clean-archived {on,off} Remove all manifests from archived repos (off by default)
+  --dry-run                 Simulate processing of the script without making changes to Snyk
+  --debug                   Write detailed debug data to snyk_scm_refresh.log for troubleshooting
 ```
 
 ### Sync with defaults
