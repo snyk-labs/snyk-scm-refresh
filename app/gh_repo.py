@@ -232,26 +232,12 @@ def get_gh_repo_status(snyk_gh_repo):
                 repo_new_full_name = follow_response.json()["full_name"]
                 repo_owner = repo_new_full_name.split("/")[0]
                 repo_name = repo_new_full_name.split("/")[1]
+                archived = response.json()['archived']
             else:
                 repo_owner = ""
                 repo_name = ""
 
-<<<<<<< HEAD
-            response_message = "Moved to %s" % repo_name
-
-        repo_status = {
-            "response_code": response.status_code,
-            "response_message": response_message,
-            "repo_name": repo_name,
-            "snyk_org_id": snyk_gh_repo["org_id"],
-            "repo_owner": repo_owner,
-            "repo_full_name": f"{repo_owner}/{repo_name}",
-            "repo_default_branch": repo_default_branch,
-            "archived": archived
-        }
-=======
             response_message = f"Moved to {repo_name}"
->>>>>>> parent/develop
 
     except requests.exceptions.RequestException as err:
         # make sure it gets logged in log file when in debug mode
@@ -268,7 +254,8 @@ def get_gh_repo_status(snyk_gh_repo):
             snyk_gh_repo["org_id"],
             repo_owner,
             f"{repo_owner}/{repo_name}",
-            repo_default_branch
+            repo_default_branch,
+            archived
         )
     return repo_status
 

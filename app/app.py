@@ -77,25 +77,6 @@ def run():
         if gh_repo_status.response_code == 404: # project no longer exists
             log_potential_delete(snyk_repo.org_name, snyk_repo.full_name)
 
-<<<<<<< HEAD
-        elif gh_repo_status["response_code"] == 200: # project exists and has not been renamed
-            if gh_repo_status["archived"] == True and common.ARGS.clean_archived: # repo is archived and clean-archived flag is set
-                app_print(snyk_repo.org_name,
-                  snyk_repo.full_name,
-                  f"Repo is archived")
-                deleted_projects = snyk_repo.delete_manifests(common.ARGS.dry_run)
-                for project in deleted_projects:
-                    if not common.ARGS.dry_run:
-                        app_print(snyk_repo.org_name,
-                                    snyk_repo.full_name,
-                                    f"Deleted manifest: {project['manifest']}")
-                    else:
-                        app_print(snyk_repo.org_name,
-                                    snyk_repo.full_name,
-                                    f"Would delete manifest: {project['manifest']}")
-            # snyk has the wrong branch, re-import
-            elif gh_repo_status["repo_default_branch"] != snyk_repo.branch:
-=======
         elif gh_repo_status.response_code == 200: # project exists and has not been renamed
             # if --audit-large-repos is on
             if common.ARGS.audit_large_repos:
@@ -110,9 +91,22 @@ def run():
                 )
                 # move to next repo without processing the rest of the code
                 continue
+            if gh_repo_status.archived == True and common.ARGS.clean_archived: # repo is archived and clean-archived flag is set
+                app_print(snyk_repo.org_name,
+                  snyk_repo.full_name,
+                  f"Repo is archived")
+                deleted_projects = snyk_repo.delete_manifests(common.ARGS.dry_run)
+                for project in deleted_projects:
+                    if not common.ARGS.dry_run:
+                        app_print(snyk_repo.org_name,
+                                    snyk_repo.full_name,
+                                    f"Deleted manifest: {project['manifest']}")
+                    else:
+                        app_print(snyk_repo.org_name,
+                                    snyk_repo.full_name,
+                                    f"Would delete manifest: {project['manifest']}")
             # snyk has the wrong branch, re-import
-            if gh_repo_status.repo_default_branch != snyk_repo.branch:
->>>>>>> parent/develop
+            elif gh_repo_status.repo_default_branch != snyk_repo.branch:
                 app_print(snyk_repo.org_name,
                           snyk_repo.full_name,
                           f"Default branch name changed from {snyk_repo.branch}" \
