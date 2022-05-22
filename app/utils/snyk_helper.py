@@ -15,35 +15,55 @@ def app_print(org, repo, text):
 def log_potential_delete(org_name, repo_name):
     """ Log potential repo deletion """
     app_print(org_name, repo_name, "Logging potential delete")
-    common.POTENTIAL_DELETES_FILE.write("%s,%s\n" % (org_name, repo_name))
+    common.POTENTIAL_DELETES_FILE.write(f"{org_name},{repo_name}\n")
 
 def log_updated_project_branch(org_name, project_id, project_name, new_branch):
     """ Log project branch update """
-    common.UPDATED_PROJECT_BRANCHES_FILE.write("%s,%s,%s,%s\n" % (org_name,
-                                                                  project_name,
-                                                                  project_id,
-                                                                  new_branch))
+    common.UPDATED_PROJECT_BRANCHES_FILE.write(f"{org_name},"
+                                               f"{project_name},"
+                                               f"{project_id},"
+                                               f"{new_branch}\n")
 
 def log_update_project_branch_error(org_name, project_id, project_name, new_branch):
     """ Log project branch update """
-    common.UPDATE_PROJECT_BRANCHES_ERRORS_FILE.write("%s,%s,%s,%s\n" % (org_name,
-                                                                        project_name,
-                                                                        project_id,
-                                                                        new_branch))
+    common.UPDATE_PROJECT_BRANCHES_ERRORS_FILE.write(
+        f"{org_name},"
+        f"{project_name},"
+        f"{project_id},"
+        f"{new_branch}\n")
+
+def log_audit_large_repo_result(org_name: str, repo_name: str, is_large: str):
+    """ Log audit large repo result """
+    common.LARGE_REPOS_AUDIT_RESULTS_FILE.write(
+        f"{org_name},"
+        f"{repo_name},"
+        f"{is_large}\n")
 
 def get_snyk_repos_from_snyk_orgs(snyk_orgs, ARGS):
     """Build list of repositories from a given list of Snyk orgs"""
     snyk_repos = []
     snyk_projects = build_snyk_project_list(snyk_orgs, ARGS)
 
-    repo_projects = []
-
     # initialize to the first repo name
-    curr_repo_name = snyk_projects[0]["repo_full_name"]
     num_projects = len(snyk_projects)
 
+    if num_projects > 0:
+        snyk_repos = get_snyk_repos_from_snyk_projects(snyk_projects)
+
+    return snyk_repos
+
+def get_snyk_repos_from_snyk_projects(snyk_projects):
+    """ Get list of unique repos built from an input of snyk projects"""
+    snyk_repos = []
+    # num_projects = len(snyk_projects)
+    curr_repo_name = ""
+
+    repo_projects = []
     for (i, project) in enumerate(snyk_projects):
-        if i == num_projects-1:
+
+        # we encountered a new repo
+        if project["repo_full_name"] != curr_repo_name:
+            # add repo to snyk_repos
             snyk_repos.append(
                 SnykRepo(snyk_projects[i]["repo_full_name"],
                          snyk_projects[i]["org_id"],
@@ -51,28 +71,16 @@ def get_snyk_repos_from_snyk_orgs(snyk_orgs, ARGS):
                          snyk_projects[i]["integration_id"],
                          snyk_projects[i]["origin"],
                          snyk_projects[i]["branch"],
-                         repo_projects)
+                         [x for x in snyk_projects \
+                             if x["repo_full_name"] == project["repo_full_name"]])
             )
-
-        # we encountered a new repo, or reached the end of the project list
-        if project["repo_full_name"] != curr_repo_name:
-            # add repo to snyk_repos
-            snyk_repos.append(
-                SnykRepo(snyk_projects[i-1]["repo_full_name"],
-                         snyk_projects[i-1]["org_id"],
-                         snyk_projects[i-1]["org_name"],
-                         snyk_projects[i-1]["integration_id"],
-                         snyk_projects[i-1]["origin"],
-                         snyk_projects[i-1]["branch"],
-                         repo_projects)
-            )
-            repo_projects = [project]
+            repo_projects = []
 
         else:
-            # add to project list for this repo
             repo_projects.append(project)
 
         curr_repo_name = project["repo_full_name"]
+
     return snyk_repos
 
 def build_snyk_project_list(snyk_orgs, ARGS):
@@ -172,7 +180,7 @@ def import_manifests(org_id, repo_full_name, integration_id, files=[]) -> Import
 
     repo_full_name = repo_full_name.split("/")
     org = common.snyk_client.organizations.get(org_id)
-    path = "org/%s/integrations/%s/import" % (org.id, integration_id)
+    path = f"org/{org.id}/integrations/{integration_id}/import"
 
     if len(files) > 0:
         payload = {
@@ -195,6 +203,8 @@ def import_manifests(org_id, repo_full_name, integration_id, files=[]) -> Import
             except snyk.errors.SnykHTTPError as err_retry:
                 print(f"Still failed after retry with {str(err_retry.code)}!")
                 raise
+        else:
+            raise
     return ImportStatus(re.search('org/.+/integrations/.+/import/(.+)',
                                   response.headers['Location']).group(1),
                         response.headers['Location'],
@@ -231,8 +241,10 @@ def process_import_status_checks(import_status_checks):
     import_jobs_completed = []
     import_logs_completed = []
 
-    print("Checking import statuses, polling for up to %s minutes..."
-          % str((common.PENDING_REMOVAL_MAX_CHECKS * common.PENDING_REMOVAL_CHECK_INTERVAL)/60))
+    polling_minutes = (common.PENDING_REMOVAL_MAX_CHECKS * common.PENDING_REMOVAL_CHECK_INTERVAL)/60
+
+    print(f"Checking import statuses, polling for up to "
+          f"{str(polling_minutes)} minutes...")
 
     # get unique import status checks with combined pending deletes (if present)
     seen_check_ids = []
@@ -248,9 +260,8 @@ def process_import_status_checks(import_status_checks):
 
     while check_count < common.PENDING_REMOVAL_MAX_CHECKS:
         if len(unique_import_status_checks) > len(import_jobs_completed):
-            sys.stdout.write("%s batch pending\n" % (
-                len(unique_import_status_checks) - len(import_jobs_completed)
-            ))
+            sys.stdout.write(f"{len(unique_import_status_checks) - len(import_jobs_completed)} "
+                             f"batch pending\n")
             sys.stdout.flush()
             # check each import job statuses
             for import_job in unique_import_status_checks:
@@ -266,11 +277,9 @@ def process_import_status_checks(import_status_checks):
                         uniq_import_log = import_status_log["name"] + \
                             '-' + import_status_log["created"]
                         if uniq_import_log not in import_logs_completed:
-                            print("  - [%s] Import Target status: %s (%s projects)" % (
-                                import_status_log["name"],
-                                import_status_log["status"],
-                                len(import_status_log["projects"])
-                            ))
+                            print(f"  - [{import_status_log['name']}] "
+                                  f"Import Target status: {import_status_log['status']} "
+                                  f"({len(import_status_log['projects'])} projects)")
                             # if repo import status is complete, log
                             # and delete any pending waiting on this repo import
                             if import_status_log["status"] == "complete":
@@ -283,12 +292,10 @@ def process_import_status_checks(import_status_checks):
                                                   import_status_log["name"],
                                                   f"Imported {imported_project}")
                                         # pylint: disable=line-too-long
-                                        common.COMPLETED_PROJECT_IMPORTS_FILE.write("%s,%s:%s,%s\n" % (
-                                            import_job.org_name,
-                                            import_status_log["name"],
-                                            imported_project,
-                                            project["success"]
-                                        ))
+                                        common.COMPLETED_PROJECT_IMPORTS_FILE.write(
+                                            f"{import_job.org_name},"
+                                            f"{import_status_log['name']}:{imported_project},"
+                                            f"{project['success']}\n")
 
                     if import_status["status"] != "pending":
                         import_jobs_completed.append(import_job.import_job_id)
@@ -297,20 +304,17 @@ def process_import_status_checks(import_status_checks):
                         for pending_delete in import_job.pending_project_deletes:
                             app_print(pending_delete['org_name'],
                                       pending_delete['repo_full_name'],
-                                      "delete stale project [%s]" % (
-                                          pending_delete['id']))
+                                      f"delete stale project [{pending_delete['id']}]")
                             delete_snyk_project(
                                 pending_delete['id'],
                                 pending_delete['org_id']
                             )
-                            common.RENAMED_MANIFESTS_DELETED_FILE.write("%s,%s:%s\n" % (
-                                pending_delete['org_name'],
-                                pending_delete['repo_full_name'],
-                                pending_delete['manifest']
-                            ))
+                            common.RENAMED_MANIFESTS_DELETED_FILE.write(
+                                f"{pending_delete['org_name']},"
+                                f"{pending_delete['repo_full_name']}:"
+                                f"{pending_delete['manifest']}\n")
 
-            print("Checking back in %d seconds..." %
-                  common.PENDING_REMOVAL_CHECK_INTERVAL)
+            print(f"Checking back in {common.PENDING_REMOVAL_CHECK_INTERVAL} seconds...")
             time.sleep(common.PENDING_REMOVAL_CHECK_INTERVAL)
 
         else:
@@ -319,28 +323,21 @@ def process_import_status_checks(import_status_checks):
 
         check_count += 1
         if check_count == common.PENDING_REMOVAL_MAX_CHECKS:
-            print(
-                "\nExiting with %d pending removals, logging...\n" % (
-                    len(unique_import_status_checks) -
-                    len(import_jobs_completed)
-                )
-            )
+            print(f"\nExiting with {len(unique_import_status_checks) - len(import_jobs_completed)} "
+                  f"pending removals, logging...\n")
+
             for import_status_check in unique_import_status_checks:
                 if import_status_check.import_job_id \
                         not in import_jobs_completed:
                     common.RENAMED_MANIFESTS_PENDING_FILE.write(
-                        "%s,%s/%s\n" % (
-                            import_status_check.org_name,
-                            import_status_check.repo_owner,
-                            import_status_check.repo_name
-                        )
-                    )
+                        f"{import_status_check.org_name},"
+                        f"{import_status_check.repo_owner}/{import_status_check.repo_name}\n")
             return
 
 def update_project_branch(project_id, project_name, org_id, new_branch_name):
     """ update snyk project monitored branch """
     org = common.snyk_client.organizations.get(org_id)
-    path = "org/%s/project/%s" % (org.id, project_id)
+    path = f"org/{org.id}/project/{project_id}"
 
     payload = {
         "branch": new_branch_name
