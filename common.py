@@ -14,7 +14,7 @@ import configparser
 MANIFEST_PATTERN_SCA = '^(?![.]).*(package[.]json|Gemfile[.]lock|pom[.]xml|build[.]gradle|.*[.]lockfile|build[.]sbt|.*req.*[.]txt|Gopkg[.]lock|go[.]mod|vendor[.]json|packages[.]config|.*[.]csproj|.*[.]fsproj|.*[.]vbproj|project[.]json|project[.]assets[.]json|composer[.]lock|Podfile|Podfile[.]lock)$'
 MANIFEST_PATTERN_CONTAINER = '^.*(Dockerfile)$'
 MANIFEST_PATTERN_IAC = '.*[.](yaml|yml|tf)$'
-MANIFEST_PATTERN_CODE = '.*[.](js|cs|php|java|py)$'
+MANIFEST_PATTERN_CODE = '.*[.](js|cs|php|java|py|ts|go|rb)$'
 MANIFEST_PATTERN_EXCLUSIONS = '^.*(fixtures|tests\/|__tests__|test\/|__test__|[.].*ci\/|.*ci[.].yml|node_modules\/|bower_components\/|variables[.]tf|outputs[.]tf).*$'
 GITHUB_CLOUD_API_HOST = "api.github.com"
 
