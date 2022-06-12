@@ -58,7 +58,7 @@ workflows:
                 - master
     jobs:
       - build-test-monitor:
-          context: SNYK
+          context: snyk-cs-engineering
           filters:
             branches:
               only: 
@@ -66,4 +66,4 @@ workflows:
   build-test:
     jobs:
       - build-test:
-          context: SNYK
+          context: snyk-cs-engineering
