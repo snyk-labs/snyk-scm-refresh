@@ -9,7 +9,6 @@ import common
 from app.models import ImportStatus
 from app.gh_repo import (
     get_gh_repo_status,
-    is_default_branch_renamed,
     is_gh_repo_truncated,
     get_git_tree_from_api
 )
@@ -97,41 +96,16 @@ def run():
                           snyk_repo.full_name,
                           f"Default branch name changed from {snyk_repo.branch}" \
                           f" -> {gh_repo_status.repo_default_branch}")
-                app_print(snyk_repo.org_name,
-                          snyk_repo.full_name,
-                          "Checking if existing default branch was just renamed?")
-                try:
-                    if snyk_repo.origin == "github":
-                        is_default_renamed = is_default_branch_renamed(
-                            snyk_repo, gh_repo_status.repo_default_branch,
-                            common.GITHUB_TOKEN)
-                    elif snyk_repo.origin == "github-enterprise":
-                        is_default_renamed = is_default_branch_renamed(
-                            snyk_repo, gh_repo_status.repo_default_branch,
-                            common.GITHUB_ENTERPRISE_TOKEN,
-                            True)
-
-                except RuntimeError as err:
-                    raise RuntimeError("Failed to query GitHub repository!") from err
-
-                if not is_default_renamed:
-                    app_print(snyk_repo.org_name,
-                              snyk_repo.full_name,
-                              "It's a different branch, update snyk projects...")
-                    updated_projects = snyk_repo.update_branch(
-                        gh_repo_status.repo_default_branch,
-                        common.ARGS.dry_run)
-                    for project in updated_projects:
-                        if not common.ARGS.dry_run:
-                            app_print(snyk_repo.org_name,
-                                      snyk_repo.full_name,
-                                      f"Monitored branch set to " \
-                                      f"{gh_repo_status.repo_default_branch} " \
-                                      f"for: {project['manifest']}")
-                else:
-                    app_print(snyk_repo.org_name,
-                              snyk_repo.full_name,
-                              "Branch was just renamed, leaving as-is")
+                updated_projects = snyk_repo.update_branch(
+                    gh_repo_status.repo_default_branch,
+                    common.ARGS.dry_run)
+                for project in updated_projects:
+                    if not common.ARGS.dry_run:
+                        app_print(snyk_repo.org_name,
+                                    snyk_repo.full_name,
+                                    f"Monitored branch set to " \
+                                    f"{gh_repo_status.repo_default_branch} " \
+                                    f"for: {project['manifest']}")
             else: #find deltas
                 app_print(snyk_repo.org_name,
                           snyk_repo.full_name,
