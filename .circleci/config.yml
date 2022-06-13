@@ -50,14 +50,16 @@ jobs:
   
 workflows:
   version: 2.1
-  nightly:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
+  #nightly:
+  #  triggers:
+  #    - schedule:
+  #        cron: "0 0 * * *"
+  #        filters:
+  #          branches:
+  #            only:
+  #              - master
+  #  jobs:
+  build-test-monitor:
     jobs:
       - build-test-monitor:
           context: snyk-cs-engineering
