@@ -44,6 +44,7 @@ jobs:
       - snyk/scan:
           fail-on-issues: true
           monitor-on-build: true
+          project: 'requirements.txt'
           organization: $SNYK_ORG
           token-variable: SNYK_TOKEN
   
