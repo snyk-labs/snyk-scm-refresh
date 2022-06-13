@@ -22,6 +22,7 @@ jobs:
       - snyk/scan:
           fail-on-issues: true
           monitor-on-build: false
+          organization: $SNYK_ORG
           token-variable: SNYK_TOKEN
   build-test-monitor:
     docker:
@@ -43,6 +44,7 @@ jobs:
       - snyk/scan:
           fail-on-issues: true
           monitor-on-build: true
+          organization: $SNYK_ORG
           token-variable: SNYK_TOKEN
   
   
