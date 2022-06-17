@@ -64,11 +64,11 @@ defaults + snyk code enable: `./snyk_scm_refresh.py --org-id=12345 --code=on`
 
 ## Dependencies
 ```
-pip install -r requirements.txt
+pip install -r requirements-freeze.txt
 ```
 or
 ```
-python3 -m pip install -r requirements.txt
+python3 -m pip install -r requirements-freeze.txt
 ```
 ## Environment
 ```
