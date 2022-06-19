@@ -170,6 +170,10 @@ def run():
                           snyk_repo.full_name,
                           "Would import repo (all targets) under new name")
 
+        # 403 could indicate rate limit apparently so it's better to throw
+        # and let the caller retry the process at some later phase :shrug: 
+        elif gh_repo_status.response_code == 403:
+            raise RuntimeError("Github returned 403, probably rate limit")
         else:
             app_print(snyk_repo.org_name,
                       snyk_repo.full_name,
