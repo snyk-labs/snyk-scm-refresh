@@ -1,0 +1,20 @@
+name: Github Issues to Jira Issues
+on:
+  issues:
+    types: [opened, closed, labeled, unlabeled]
+  issue_comment:
+    types: [created]
+jobs:
+  sync:
+    name: Sync Items
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync Github Issues to Jira
+        uses: jordansilva/github-action-issue-to-jira@v1.1.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          jiraHost: ${{ secrets.CSENG_JIRA_HOST }}
+          jiraUsername: ${{ secrets.CSENG_JIRA_USERNAME }}
+          jiraPassword: ${{ secrets.CSENG_JIRA_PASSWORD }} 
+          project:  ${{ secrets.CSENG_JIRA_PROJECTKEY }} 
