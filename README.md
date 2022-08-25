@@ -39,7 +39,7 @@ optional arguments:
   --sca {on,off}        scan for SCA manifests (on by default)
   --container {on,off}  scan for container projects, e.g. Dockerfile (on by default)
   --iac {on,off}        scan for IAC manifests (experimental, off by default)
-  --code {on,off}       create code analysis if not present (experimental, off by default)
+  --code {off}          code analysis is deprecated with off only option
   --dry-run             Simulate processing of the script without making changes to Snyk
   --skip-scm-validation
                         Skip validation of the TLS certificate used by the SCM
@@ -57,9 +57,10 @@ optional arguments:
 ### Sync Container projects only
 `./snyk_scm_refresh.py --org-id=12345 --sca=off --container=on`
 
-### Enable Snyk Code analysis for repos
-only: `./snyk_scm_refresh.py --org-id=12345 --sca=off --container=off --code=on` \
-defaults + snyk code enable: `./snyk_scm_refresh.py --org-id=12345 --code=on`
+### Deprecated
+#### Snyk Code analysis for repos (Deprecated)
+~~only: `./snyk_scm_refresh.py --org-id=12345 --sca=off --container=off --code=on`~~</br>
+~~defaults + snyk code enable: `./snyk_scm_refresh.py --org-id=12345 --code=on`~~
 
 
 ## Dependencies
