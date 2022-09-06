@@ -1,5 +1,11 @@
+![Snyk logo](https://snyk.io/style/asset/logo/snyk-print.svg)
+
+![snyk-oss-category](https://github.com/snyk-labs/oss-images/blob/main/oss-community.jpg)
+
 # snyk-scm-refresh
-[![Known Vulnerabilities](https://snyk.io/test/github/snyk-tech-services/snyk-scm-refresh/badge.svg)](https://snyk.io/test/github/snyk-tech-services/snyk-scm-refresh) [![circleci](https://circleci.com/gh/snyk-tech-services/snyk-scm-refresh.svg?style=svg)](https://circleci.com/gh/snyk-tech-services/snyk-scm-refresh)
+[![Known Vulnerabilities](https://snyk.io/test/github/snyk-labs/snyk-scm-refresh/badge.svg)](https://snyk.io/test/github/snyk-labs/snyk-scm-refresh) ![ci](https://github.com/snyk-labs/snyk-scm-refresh/actions/workflows/ci.yml/badge.svg)
+
+### Description
 
 <blockquote>
 <g-emoji class="g-emoji" alias="warning" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/26a0.png">⚠️</g-emoji> <strong>WARNING:</strong>
@@ -23,7 +29,7 @@ For repos with at least 1 project already in Snyk:
 - Monitoring non-default branches
 - Using an SCM other than Github.com or Github Enterprise Server
 
-## Usage
+### Usage
 ```
 usage: snyk_scm_refresh.py [-h] [--org-id ORG_ID] [--repo-name REPO_NAME] [--sca {on,off}]
                            [--container {on,off}] [--iac {on,off}] [--code {on,off}] [--dry-run]
@@ -48,21 +54,21 @@ optional arguments:
   --debug               Write detailed debug data to snyk_scm_refresh.log for troubleshooting
 ```
 
-### Sync with defaults
+#### Sync with defaults
 `./snyk_scm_refresh.py --org-id=12345`
 
-### Sync SCA projects only
+#### Sync SCA projects only
 `./snyk_scm_refresh.py --org-id=12345 --container=off`
 
-### Sync Container projects only
+#### Sync Container projects only
 `./snyk_scm_refresh.py --org-id=12345 --sca=off --container=on`
 
-### Enable Snyk Code analysis for repos
+#### Enable Snyk Code analysis for repos
 only: `./snyk_scm_refresh.py --org-id=12345 --sca=off --container=off --code=on` \
 defaults + snyk code enable: `./snyk_scm_refresh.py --org-id=12345 --code=on`
 
 
-## Dependencies
+### Dependencies
 ```
 pip install -r requirements.txt
 ```
@@ -70,20 +76,20 @@ or
 ```
 python3 -m pip install -r requirements.txt
 ```
-## Environment
+### Environment
 ```
 export SNYK_TOKEN=<snyk-token>
 export GITHUB_TOKEN=<github-token>
 export GITHUB_ENTERPRISE_TOKEN=<github-enterprise-token>
 export GITHUB_ENTERPRISE_HOST=<github-enterprise-host>
 ```
-If GITHUB_TOKEN is set, your Github.com repos will processed
+If GITHUB_TOKEN is set, your Github.com repos will be processed
 
 If GITHUB_ENTERPRISE_TOKEN and GITHUB_ENTERPRISE_HOST are BOTH set, your Github Enterprise Server repos will be processed
 
 <blockquote>
 :information_source:
-If using the Snyk Github Enterprise Integration type for your Github.com repositories, then set GITHUB_ENTERPRISE_HOST=api.github.com
+If Snyk Github Enterprise Integration type is used for your Github.com repositories, then set GITHUB_ENTERPRISE_HOST=api.github.com
 </blockquote>
 <br/>
 
@@ -99,7 +105,7 @@ This tool uses the python requests library, therefore you can point [REQUESTS_CA
 
 If you are not able to validate the self-signed certificate, you may skip validation by providing the `--skip-scm-validation` option. 
 
-## Instructions
+### Instructions
 Make sure to use a user *API Token* that has access to the Snyk Orgs you need to process with the script.  A service account will *not* work for GitHub, which is the only SCM currently supported at this time.
 
 Ensure that your GITHUB_TOKEN or GITHUB_ENTERPRISE_TOKEN has access to the repos contained in the Snyk Orgs in scope
@@ -123,7 +129,7 @@ Use the `--dry-run` option to verify the execution plan for the first run
 | _update-project-branches-errors.csv | projects that had an error attempting to update default branch |
 | _repos-skipped-on-error.csv | repos skipped due to import error |
 
-## Handling of large repositories
+### Handling of large repositories
 The primary method used by this tool to retrieve the GIT tree from each repository for the basis of comparison is via the Github API.  
 For sufficiently large repositories, though, Github truncates the API response.  When a truncated Github response is detected when retrieving the GIT tree,
 this tool will fall back on using the local `git` if available and configured to perform a shallow clone of the repository's default branch in order to build the tree.
