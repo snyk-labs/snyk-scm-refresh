@@ -1,4 +1,17 @@
 version: 2.1
+parameters:
+  GHA_Event:
+    type: string
+    default: ""
+  GHA_Actor:
+    type: string
+    default: ""
+  GHA_Action:
+    type: string
+    default: ""
+  GHA_Meta:
+    type: string
+    default: ""
 orbs:
   snyk: snyk/snyk@1.1.2
 jobs:
@@ -47,8 +60,8 @@ jobs:
           project: 'requirements.txt'
           organization: $SNYK_ORG
           token-variable: SNYK_TOKEN
-  
-  
+
+
 workflows:
   version: 2.1
   #nightly:
@@ -61,6 +74,8 @@ workflows:
   #              - master
   #  jobs:
   build-test-monitor:
+    when:
+      equal: [ "push", << pipeline.parameters.GHA_Event >>]
     jobs:
       - build-test-monitor:
           context: snyk-cs-engineering
