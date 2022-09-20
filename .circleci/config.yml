@@ -32,11 +32,6 @@ jobs:
       - run:
           name: "Lint"
           command: '$HOME/.local/bin/pylint app --ignore-patterns=test_'
-      - snyk/scan:
-          fail-on-issues: true
-          monitor-on-build: false
-          organization: $SNYK_ORG
-          token-variable: SNYK_TOKEN
   build-test-monitor:
     docker:
       - image: circleci/python:3.7.2
@@ -75,13 +70,15 @@ workflows:
   #  jobs:
   build-test-monitor:
     when:
-      equal: [ "push", << pipeline.parameters.GHA_Event >>]
+      and:
+        - equal: [ master, << pipeline.git.branch >> ]
+        - equal: [ "push", << pipeline.parameters.GHA_Event >>]
     jobs:
       - build-test-monitor:
           context: snyk-cs-engineering
           filters:
             branches:
-              only: 
+              only:
                 - master
   build-test:
     jobs:
