@@ -15,10 +15,10 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   snyk_test:
+    if: github.repository == 'snyk-labs/snyk-scm-refresh'
     permissions:
       contents: read # for actions/checkout to fetch code
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
-    if: github.repository == 'snyk-labs/snyk-scm-refresh'
     runs-on: ubuntu-latest
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -44,11 +44,11 @@ jobs:
         with:
           sarif_file: snyk.sarif
   snyk_monitor:
+    if: github.repository == 'snyk-labs/snyk-scm-refresh'
     permissions:
       contents: read # for actions/checkout to fetch code
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
     needs: snyk_test
-    if: github.repository == 'snyk-labs/snyk-scm-refresh'
     runs-on: ubuntu-latest
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
