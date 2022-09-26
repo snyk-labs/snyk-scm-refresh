@@ -52,10 +52,12 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --all-projects --sarif-file-output=snyk.sarif
+        if: github.repository == 'snyk-labs/snyk-scm-refresh'
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: snyk.sarif
+        if: github.repository == 'snyk-labs/snyk-scm-refresh'
   snyk_monitor:
     permissions:
       contents: read # for actions/checkout to fetch code
@@ -74,3 +76,4 @@ jobs:
         with:
           command: monitor
           args: --all-projects
+        if: github.repository == 'snyk-labs/snyk-scm-refresh'
