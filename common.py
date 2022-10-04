@@ -108,12 +108,13 @@ def parse_command_line_args():
         default=False,
         choices=['on', 'off']
     )
+    # show disabled argument help message and prevent invalidation of any existent "--code=off" verbose argument mode
     parser.add_argument(
         "--code",
-        help="create code analysis if not present (experimental, off by default)",
+        help="code analysis is deprecated with off only option",
         required=False,
         default=False,
-        choices=['on', 'off']
+        choices=['off']
     )
     parser.add_argument(
         "--dry-run",
@@ -177,4 +178,5 @@ if (GITHUB_ENTERPRISE_HOST):
 PROJECT_TYPE_ENABLED_SCA = toggle_to_bool(ARGS.sca)
 PROJECT_TYPE_ENABLED_CONTAINER = toggle_to_bool(ARGS.container)
 PROJECT_TYPE_ENABLED_IAC = toggle_to_bool(ARGS.iac)
-PROJECT_TYPE_ENABLED_CODE = toggle_to_bool(ARGS.code)
+# disabled snyk code due to unsupported underlying api changes
+PROJECT_TYPE_ENABLED_CODE = False
