@@ -180,3 +180,4 @@ PROJECT_TYPE_ENABLED_CONTAINER = toggle_to_bool(ARGS.container)
 PROJECT_TYPE_ENABLED_IAC = toggle_to_bool(ARGS.iac)
 # disabled snyk code due to unsupported underlying api changes
 PROJECT_TYPE_ENABLED_CODE = False
+MAX_IMPORT_MANIFEST_PROJECTS = 1000

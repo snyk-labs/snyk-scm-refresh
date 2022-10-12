@@ -183,6 +183,12 @@ def import_manifests(org_id, repo_full_name, integration_id, files=[]) -> Import
     path = f"org/{org.id}/integrations/{integration_id}/import"
 
     if len(files) > 0:
+        # verify against set limit per repo
+        if len(files) > common.MAX_IMPORT_MANIFEST_PROJECTS:
+            raise snyk.errors.SnykError(
+                f"Number of manifest projects exceeds limit of {common.MAX_IMPORT_MANIFEST_PROJECTS} "
+                f"in repo: {repo_full_name[0]}/{repo_full_name[1]} at SnykOrg: {org.name}")
+
         payload = {
             "target": {"owner": repo_full_name[0], "name": repo_full_name[1], "branch": ""},
             "files": files
