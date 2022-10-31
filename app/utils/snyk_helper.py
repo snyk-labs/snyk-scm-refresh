@@ -227,6 +227,16 @@ def delete_snyk_project(project_id, org_id):
         print(f"    - Project {project_id} not found in org {org_id} ...")
         return False
 
+def deactivate_snyk_project(project_id, org_id):
+    org = common.snyk_client.organizations.get(org_id)
+
+    try:
+        project = org.projects.get(project_id)
+        return project.deactivate()
+    except snyk.errors.SnykNotFoundError:
+        print(f"    - Project {project_id} not found in org {org_id} ...")
+        return False
+
 def process_import_status_checks(import_status_checks):
     # pylint: disable=too-many-nested-blocks, too-many-branches
     # pylint: disable=too-many-locals

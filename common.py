@@ -108,6 +108,13 @@ def parse_command_line_args():
         default=False,
         choices=['on', 'off']
     )
+    parser.add_argument(
+        "--on-archived",
+        help="scan for IAC manifests (experimental, off by default)",
+        required=False,
+        default="retain",
+        choices=['retain', 'deactivate', 'delete']
+    )
     # show disabled argument help message and prevent invalidation of any existent "--code=off" verbose argument mode
     parser.add_argument(
         "--code",

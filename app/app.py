@@ -90,8 +90,31 @@ def run():
                 )
                 # move to next repo without processing the rest of the code
                 continue
+
+            if gh_repo_status.archived and common.ARGS.on_archived != "retain":
+                app_print(snyk_repo.org_name,
+                  snyk_repo.full_name,
+                  f"Repo is archived")
+
+                # Check what archival mode we're running in
+                on_archival_action = common.ARGS.on_archived
+                if on_archival_action == "deactivate":
+                    deleted_projects = snyk_repo.deactivate_manifests(common.ARGS.dry_run)
+                elif on_archival_action == "delete":
+                    deleted_projects = snyk_repo.deactivate_manifests(common.ARGS.dry_run)
+
+                # And tell the user what has or would have happened
+                for project in deleted_projects:
+                    if not common.ARGS.dry_run:
+                        app_print(snyk_repo.org_name,
+                                    snyk_repo.full_name,
+                                    f"Deleted manifest: {project['manifest']}")
+                    else:
+                        app_print(snyk_repo.org_name,
+                                    snyk_repo.full_name,
+                                    f"Would delete manifest: {project['manifest']}")
             # snyk has the wrong branch, re-import
-            if gh_repo_status.repo_default_branch != snyk_repo.branch:
+            elif gh_repo_status.repo_default_branch != snyk_repo.branch:
                 app_print(snyk_repo.org_name,
                           snyk_repo.full_name,
                           f"Default branch name changed from {snyk_repo.branch}" \

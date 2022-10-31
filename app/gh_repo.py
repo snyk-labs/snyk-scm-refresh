@@ -183,6 +183,7 @@ def get_gh_repo_status(snyk_gh_repo):
     response_message = ""
     response_status_code = ""
     repo_default_branch = ""
+    archived = ""
 
     # logging.debug(f"snyk_gh_repo origin: {snyk_gh_repo.origin}")
 
@@ -231,6 +232,7 @@ def get_gh_repo_status(snyk_gh_repo):
                 repo_new_full_name = follow_response.json()["full_name"]
                 repo_owner = repo_new_full_name.split("/")[0]
                 repo_name = repo_new_full_name.split("/")[1]
+                archived = response.json()['archived']
             else:
                 repo_owner = ""
                 repo_name = ""
@@ -252,6 +254,7 @@ def get_gh_repo_status(snyk_gh_repo):
             snyk_gh_repo["org_id"],
             repo_owner,
             f"{repo_owner}/{repo_name}",
-            repo_default_branch
+            repo_default_branch,
+            archived
         )
     return repo_status
