@@ -59,7 +59,7 @@ def test_get_gh_repo_status_github(mocker, status_code, response_message, repo, 
         snyk_repo_github["full_name"].split("/")[0],
         snyk_repo_github["full_name"],
         default_branch,
-        False
+        ''
     )
 
     assert get_gh_repo_status(snyk_repo_github) == repo_status
@@ -98,7 +98,7 @@ def test_get_gh_repo_status_github_enterprise_cloud(mocker, status_code, respons
         snyk_repo_github_enterprise["full_name"].split("/")[0],
         snyk_repo_github_enterprise["full_name"],
         default_branch,
-        False
+        ''
     )
 
     assert get_gh_repo_status(snyk_repo_github_enterprise) == repo_status
