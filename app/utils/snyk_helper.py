@@ -185,9 +185,14 @@ def import_manifests(org_id, repo_full_name, integration_id, files=[]) -> Import
     if len(files) > 0:
         # verify against set limit per repo
         if len(files) > common.MAX_IMPORT_MANIFEST_PROJECTS:
-            raise snyk.errors.SnykError(
-                f"Number of projects exceeds limit of {common.MAX_IMPORT_MANIFEST_PROJECTS} \
-                in Org: {org.name} repo: {repo_full_name[0]}/{repo_full_name[1]}")
+            # log skipped manifests exceeding limit to csv file
+            skipped_files = files[-(len(files) - common.MAX_IMPORT_MANIFEST_PROJECTS):]
+            print(f"Exceeded manifests import limit of {common.MAX_IMPORT_MANIFEST_PROJECTS}, "
+                  f"see {len(skipped_files)} skipped manifests in {common.MANIFESTS_SKIPPED_ON_LIMIT_FILE.name}")
+            for mf in skipped_files:
+                common.MANIFESTS_SKIPPED_ON_LIMIT_FILE.write(f"{mf['path']}\n")
+            # import manifests within limit
+            files = files[:common.MAX_IMPORT_MANIFEST_PROJECTS]
 
         payload = {
             "target": {"owner": repo_full_name[0], "name": repo_full_name[1], "branch": ""},

@@ -53,6 +53,10 @@ REPOS_SKIPPED_ON_ERROR_FILE = open(
     "%s_repos-skipped-on-error.csv" % LOG_PREFIX, "w"
 )
 REPOS_SKIPPED_ON_ERROR_FILE.write("org,repo,status\n")
+MANIFESTS_SKIPPED_ON_LIMIT_FILE = open(
+    "%s_manifests-skipped-on-limit.csv" % LOG_PREFIX, "w"
+)
+MANIFESTS_SKIPPED_ON_LIMIT_FILE.write("skipped_manifest_file_path\n")
 UPDATED_PROJECT_BRANCHES_FILE = open(
     "%s_updated-project-branches.csv" % LOG_PREFIX, "w"
 )

@@ -1,6 +1,8 @@
 """test suite for snyk_scm_refresh.py"""
 import os
 import pytest
+import random
+import string
 import snyk
 from snyk.models import Organization
 from snyk.models import Project
@@ -284,15 +286,24 @@ def test_import_manifest_exceeds_limit(mocker):
     integration_id = "5881e5b0-308f-4a1b-9bcb-38e3491872e0"
     files = []
 
+    # follow snyk_repo.add_new_manifests appending manifest path
     for x in range(common.MAX_IMPORT_MANIFEST_PROJECTS + 1):
-        files.append({"path": ["mock_path"], "type": "iac", "manifest": "main.tf"})
+        files.append(dict({"path": ''.join(random.choices(string.ascii_lowercase, k=5)) + ".tf"}))
 
     mocker.patch.dict(os.environ, {'GITHUB_TOKEN': '1234'})
     org = Organization(
         name="My Other Org", id=org_id, slug="myotherorg", url=f"https://snyk.io/api/v1/org/{org_id}"
     )
+    org.client = snyk.SnykClient("token")
     mocker.patch("snyk.managers.OrganizationManager.get", return_value=org)
+    mocker.patch("snyk.models.Organization.client", return_value=org.client)
 
-    # run assertion on expected SnykError
-    with pytest.raises(snyk.errors.SnykError, match=fr".* {common.MAX_IMPORT_MANIFEST_PROJECTS} .*"):
+    # run assertion mock client will post request and hit SnykHTTPError
+    with pytest.raises(snyk.errors.SnykHTTPError):
         import_manifests(org_id, repo_full_name, integration_id, files)
+
+    # assert csv contains header and a skipped manifest file path
+    common.MANIFESTS_SKIPPED_ON_LIMIT_FILE.close()
+    with open("snyk-scm-refresh_manifests-skipped-on-limit.csv", 'r') as fp:
+        num_lines = len(fp.readlines())
+    assert num_lines == 2
