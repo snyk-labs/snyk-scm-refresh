@@ -39,5 +39,5 @@ class GithubRepoStatus:
     repo_owner: str
     repo_full_name: str
     repo_default_branch: str
-    archived: str
+    archived: bool
     

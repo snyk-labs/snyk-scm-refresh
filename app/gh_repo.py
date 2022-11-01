@@ -183,7 +183,7 @@ def get_gh_repo_status(snyk_gh_repo):
     response_message = ""
     response_status_code = ""
     repo_default_branch = ""
-    archived = ""
+    archived = False
 
     # logging.debug(f"snyk_gh_repo origin: {snyk_gh_repo.origin}")
 

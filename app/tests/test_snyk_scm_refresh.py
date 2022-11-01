@@ -22,18 +22,18 @@ class MockResponse:
         self.headers = {"Location": "test_location"}
 
     def json(self):
-        response = {"full_name": "new_owner/new_repo", "default_branch": "master"}
+        response = {"full_name": "new_owner/new_repo", "default_branch": "master", "archived": False}
         return response
 
 @pytest.mark.parametrize(
-    "status_code, response_message, repo, name, owner, default_branch",
+    "status_code, response_message, repo, name, owner, default_branch, archived",
     [
-        (200, "Match", "test_org/test_repo", "test_repo", "test_owner", "master"),
-        (301, "Moved to new_repo", "new_owner/new_repo", "new_repo", "new_owner", ""),
-        (404, "Not Found", "test_org/test_repo", None, None, "")
+        (200, "Match", "test_org/test_repo", "test_repo", "test_owner", "master", False),
+        (301, "Moved to new_repo", "new_owner/new_repo", "new_repo", "new_owner", "", False),
+        (404, "Not Found", "test_org/test_repo", None, None, "", False)
     ],
 )
-def test_get_gh_repo_status_github(mocker, status_code, response_message, repo, name, owner, default_branch):
+def test_get_gh_repo_status_github(mocker, status_code, response_message, repo, name, owner, default_branch, archived):
 
     # TODO: assumes a successful redirect for the 301 case
     mocker.patch(
@@ -59,20 +59,20 @@ def test_get_gh_repo_status_github(mocker, status_code, response_message, repo, 
         snyk_repo_github["full_name"].split("/")[0],
         snyk_repo_github["full_name"],
         default_branch,
-        ''
+        archived
     )
 
     assert get_gh_repo_status(snyk_repo_github) == repo_status
 
 @pytest.mark.parametrize(
-    "status_code, response_message, repo, name, owner, default_branch",
+    "status_code, response_message, repo, name, owner, default_branch, archived",
     [
-        (200, "Match", "test_org/test_repo", "test_repo", "test_owner", "master"),
-        (301, "Moved to new_repo", "new_owner/new_repo", "new_repo", "new_owner", ""),
-        (404, "Not Found", "test_org/test_repo", None, None, "")
+        (200, "Match", "test_org/test_repo", "test_repo", "test_owner", "master", False),
+        (301, "Moved to new_repo", "new_owner/new_repo", "new_repo", "new_owner", "", False),
+        (404, "Not Found", "test_org/test_repo", None, None, "", False)
     ],
 )
-def test_get_gh_repo_status_github_enterprise_cloud(mocker, status_code, response_message, repo, name, owner, default_branch):
+def test_get_gh_repo_status_github_enterprise_cloud(mocker, status_code, response_message, repo, name, owner, default_branch, archived):
 
     # TODO: assumes a successful redirect for the 301 case
     mocker.patch(
@@ -98,7 +98,7 @@ def test_get_gh_repo_status_github_enterprise_cloud(mocker, status_code, respons
         snyk_repo_github_enterprise["full_name"].split("/")[0],
         snyk_repo_github_enterprise["full_name"],
         default_branch,
-        ''
+        archived
     )
 
     assert get_gh_repo_status(snyk_repo_github_enterprise) == repo_status
