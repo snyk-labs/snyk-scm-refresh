@@ -110,10 +110,18 @@ def parse_command_line_args():
     )
     parser.add_argument(
         "--on-archived",
-        help="scan for IAC manifests (experimental, off by default)",
+        help="Tells the tool what to do when a GitHub project is archived (Snyk projects retained by default)",
         required=False,
         default="retain",
         choices=['retain', 'deactivate', 'delete']
+    )
+    parser.add_argument(
+        "--on-unarchive",
+        help="If the tool detects a Snyk project deactivated whilst the GitHub repo is not archived, what should it do?"
+             " (By default the tool will do nothing)",
+        required=False,
+        default="nothing",
+        choices=['nothing', 'reactivate']
     )
     # show disabled argument help message and prevent invalidation of any existent "--code=off" verbose argument mode
     parser.add_argument(

@@ -48,6 +48,9 @@ optional arguments:
   --code {off}          code analysis is deprecated with off only option
   --on-archived {retain,deactivate,delete}
                         Deletes or deactivates projects associated with archived repos (retain by default)
+  --on-unarchive {nothing,reactivate}
+                        If there is a deactivated project in Snyk, should the tool reactivate it if the repo is not
+                        archived?
   --dry-run             Simulate processing of the script without making changes to Snyk
   --skip-scm-validation
                         Skip validation of the TLS certificate used by the SCM
