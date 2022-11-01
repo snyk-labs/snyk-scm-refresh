@@ -21,6 +21,7 @@ from app.utils.snyk_helper import (
     log_audit_large_repo_result
 )
 
+
 def run():
     """Begin application logic"""
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements
@@ -59,7 +60,7 @@ def run():
         is_default_renamed = False
         app_print(snyk_repo.org_name,
                   snyk_repo.full_name,
-                  f"Processing {str(i+1)}/{str(len(snyk_repos))}")
+                  f"Processing {str(i + 1)}/{str(len(snyk_repos))}")
 
         try:
             gh_repo_status = get_gh_repo_status(snyk_repo)
@@ -70,13 +71,13 @@ def run():
         app_print(snyk_repo.org_name,
                   snyk_repo.full_name,
                   f"Github Status {gh_repo_status.response_code}" \
-                      f"({gh_repo_status.response_message}) [{snyk_repo.origin}]")
+                  f"({gh_repo_status.response_message}) [{snyk_repo.origin}]")
 
-        #if snyk_repo does not still exist (removed/404), then log and skip to next repo
-        if gh_repo_status.response_code == 404: # project no longer exists
+        # if snyk_repo does not still exist (removed/404), then log and skip to next repo
+        if gh_repo_status.response_code == 404:  # project no longer exists
             log_potential_delete(snyk_repo.org_name, snyk_repo.full_name)
 
-        elif gh_repo_status.response_code == 200: # project exists and has not been renamed
+        elif gh_repo_status.response_code == 200:  # project exists and has not been renamed
             # if --audit-large-repos is on
             if common.ARGS.audit_large_repos:
                 is_truncated_str = \
@@ -91,26 +92,28 @@ def run():
                 # move to next repo without processing the rest of the code
                 continue
 
-            # If we've previously deactivated projects, we should activate them again if the repo becomes "unarchived"
+            # If we've previously deactivated projects, we should activate them again
+            # if the repo becomes "unarchived"
             if not gh_repo_status.archived and common.ARGS.on_unarchive == "reactivate":
                 for project in snyk_repo.snyk_projects:
                     if not project["is_monitored"]:
                         activated_projects = snyk_repo.activate_manifests(common.ARGS.dry_run)
-                        for project in activated_projects:
+                        for activated_project in activated_projects:
                             if not common.ARGS.dry_run:
                                 app_print(snyk_repo.org_name,
                                           snyk_repo.full_name,
-                                          f"Activated manifest: {project['manifest']}")
+                                          f"Activated manifest: {activated_project['manifest']}")
                             else:
                                 app_print(snyk_repo.org_name,
                                           snyk_repo.full_name,
-                                          f"Would activate manifest: {project['manifest']}")
+                                          f"Would activate manifest: "
+                                          f"{activated_project['manifest']}")
                         break  # We just needed to check if any one of the projects wasn't active
 
             if gh_repo_status.archived and common.ARGS.on_archived != "retain":
                 app_print(snyk_repo.org_name,
-                  snyk_repo.full_name,
-                  f"Repo is archived")
+                          snyk_repo.full_name,
+                          f"Repo is archived")
 
                 # Check what archival mode we're running in
                 on_archival_action = common.ARGS.on_archived
@@ -123,18 +126,19 @@ def run():
                 for project in deleted_projects:
                     if not common.ARGS.dry_run:
                         app_print(snyk_repo.org_name,
-                                    snyk_repo.full_name,
-                                    f"{on_archival_action.capitalize()}d manifest: {project['manifest']}")
+                                  snyk_repo.full_name,
+                                  f"{on_archival_action.capitalize()}d manifest: "
+                                  f"{project['manifest']}")
                     else:
                         app_print(snyk_repo.org_name,
-                                    snyk_repo.full_name,
-                                    f"Would {on_archival_action} manifest: {project['manifest']}")
+                                  snyk_repo.full_name,
+                                  f"Would {on_archival_action} manifest: {project['manifest']}")
             # snyk has the wrong branch, re-import
             elif gh_repo_status.repo_default_branch != snyk_repo.branch:
                 app_print(snyk_repo.org_name,
                           snyk_repo.full_name,
-                          f"Default branch name changed from {snyk_repo.branch}" \
-                          f" -> {gh_repo_status.repo_default_branch}")
+                          f"Default branch name changed from {snyk_repo.branch}" f" -> "
+                          f"{gh_repo_status.repo_default_branch}")
                 updated_projects = snyk_repo.update_branch(
                     gh_repo_status.repo_default_branch,
                     common.ARGS.dry_run)
@@ -145,7 +149,7 @@ def run():
                                   f"Monitored branch set to " \
                                   f"{gh_repo_status.repo_default_branch} " \
                                   f"for: {project['manifest']}")
-            else: #find deltas
+            else:  # find deltas
                 app_print(snyk_repo.org_name,
                           snyk_repo.full_name,
                           f"Checking {str(len(snyk_repo.snyk_projects))} " \
@@ -166,7 +170,7 @@ def run():
                           snyk_repo.full_name,
                           "Checking for new manifests in source tree")
 
-                #if not common.ARGS.dry_run:
+                # if not common.ARGS.dry_run:
                 projects_import = snyk_repo.add_new_manifests(common.ARGS.dry_run)
 
                 if isinstance(projects_import, ImportStatus):

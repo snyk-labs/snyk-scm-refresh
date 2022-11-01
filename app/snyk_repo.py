@@ -121,7 +121,7 @@ class SnykRepo():
             if not dry_run:
                 try:
                     app.utils.snyk_helper.delete_snyk_project(snyk_project["id"],
-                                                                snyk_project["org_id"])
+                                                              snyk_project["org_id"])
                     result.append(snyk_project)
                 except snyk.errors.SnykNotFoundError:
                     print(f"    - Project {snyk_project['id']} not found" \
@@ -139,7 +139,7 @@ class SnykRepo():
             if not dry_run:
                 try:
                     app.utils.snyk_helper.deactivate_snyk_project(snyk_project["id"],
-                                                                snyk_project["org_id"])
+                                                                  snyk_project["org_id"])
                     result.append(snyk_project)
                 except snyk.errors.SnykNotFoundError:
                     print(f"    - Project {snyk_project['id']} not found" \

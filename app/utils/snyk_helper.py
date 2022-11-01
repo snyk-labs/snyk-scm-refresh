@@ -71,7 +71,8 @@ def get_snyk_repos_from_snyk_projects(snyk_projects):
                          snyk_projects[i]["integration_id"],
                          snyk_projects[i]["origin"],
                          snyk_projects[i]["branch"],
-                         [x for x in snyk_projects if x["repo_full_name"] == project["repo_full_name"]])
+                         [x for x in snyk_projects if x["repo_full_name"] ==
+                          project["repo_full_name"]])
             )
             repo_projects = []
 
@@ -228,6 +229,7 @@ def delete_snyk_project(project_id, org_id):
         return False
 
 def deactivate_snyk_project(project_id, org_id):
+    """Deactivate a single Snyk project"""
     org = common.snyk_client.organizations.get(org_id)
 
     try:
@@ -238,6 +240,7 @@ def deactivate_snyk_project(project_id, org_id):
         return False
 
 def activate_snyk_project(project_id, org_id):
+    """Acitvate a single Syyk project"""
     org = common.snyk_client.organizations.get(org_id)
 
     try:
