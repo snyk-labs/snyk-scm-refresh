@@ -215,6 +215,7 @@ def get_gh_repo_status(snyk_gh_repo):
         if response.status_code == 200:
             response_message = "Match"
             repo_default_branch = response.json()['default_branch']
+            archived = response.json()['archived']
 
         elif response.status_code == 404:
             response_message = "Not Found"
