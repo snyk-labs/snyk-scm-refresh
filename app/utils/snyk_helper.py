@@ -183,6 +183,17 @@ def import_manifests(org_id, repo_full_name, integration_id, files=[]) -> Import
     path = f"org/{org.id}/integrations/{integration_id}/import"
 
     if len(files) > 0:
+        # verify against set limit per repo
+        if len(files) > common.MAX_IMPORT_MANIFEST_PROJECTS:
+            # log skipped manifests exceeding limit to csv file
+            skipped_files = files[-(len(files) - common.MAX_IMPORT_MANIFEST_PROJECTS):]
+            print(f"Importing up to limit of {common.MAX_IMPORT_MANIFEST_PROJECTS}/{len(files)}")
+            print(f"See skipped manifests in {common.MANIFESTS_SKIPPED_ON_LIMIT_FILE.name}")
+            for mf in skipped_files:
+                common.MANIFESTS_SKIPPED_ON_LIMIT_FILE.write(f"{mf['path']}\n")
+            # import manifests within limit
+            files = files[:common.MAX_IMPORT_MANIFEST_PROJECTS]
+
         payload = {
             "target": {"owner": repo_full_name[0], "name": repo_full_name[1], "branch": ""},
             "files": files
