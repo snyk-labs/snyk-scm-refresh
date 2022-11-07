@@ -134,6 +134,7 @@ Use the `--dry-run` option to verify the execution plan for the first run
 | _updated-project-branches.csv | projects with updated default branch  |
 | _update-project-branches-errors.csv | projects that had an error attempting to update default branch |
 | _repos-skipped-on-error.csv | repos skipped due to import error |
+| _manifests-skipped-on-limit.csv | manifest projects skipped due to import limit |
 
 ### Handling of large repositories
 The primary method used by this tool to retrieve the GIT tree from each repository for the basis of comparison is via the Github API.  
@@ -157,3 +158,7 @@ This will only query the git tree via API and look for a truncated response, and
 
 To find all the repos based on a Snyk org, use the `--org-id` parameter in conjunction with `--audit-large-repos`
 Optionally you can also supply a repo name to check a single repo by also supplying the `--repo-name` filter.
+
+### Importing manifest limit
+There is a set manifest projects import limit per execution. Skipped manifests projects above the limit will be logged to a CSV file.
+Relaunch `snyk_scm_refresh` at the next execution schedule to import any skipped projects.
