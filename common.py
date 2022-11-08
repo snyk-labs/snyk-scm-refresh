@@ -122,10 +122,10 @@ def parse_command_line_args():
     parser.add_argument(
         "--on-unarchive",
         help="If the tool detects a Snyk project deactivated whilst the GitHub repo is not archived, what should it do?"
-             " (By default the tool will do nothing)",
+             " (By default the tool will ignore)",
         required=False,
-        default="nothing",
-        choices=['nothing', 'reactivate']
+        default="ignore",
+        choices=['ignore', 'reactivate']
     )
     # show disabled argument help message and prevent invalidation of any existent "--code=off" verbose argument mode
     parser.add_argument(
