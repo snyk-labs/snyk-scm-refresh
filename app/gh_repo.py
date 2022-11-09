@@ -233,7 +233,7 @@ def get_gh_repo_status(snyk_gh_repo):
                 repo_new_full_name = follow_response.json()["full_name"]
                 repo_owner = repo_new_full_name.split("/")[0]
                 repo_name = repo_new_full_name.split("/")[1]
-                archived = response.json()['archived']
+                archived = follow_response.json()['archived']
             else:
                 repo_owner = ""
                 repo_name = ""

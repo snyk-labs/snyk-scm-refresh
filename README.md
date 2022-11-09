@@ -46,8 +46,8 @@ optional arguments:
   --container {on,off}  scan for container projects, e.g. Dockerfile (on by default)
   --iac {on,off}        scan for IAC manifests (experimental, off by default)
   --code {off}          code analysis is deprecated with off only option
-  --on-archived {retain,deactivate,delete}
-                        Deletes or deactivates projects associated with archived repos (retain by default)
+  --on-archived {ignore,deactivate,delete}
+                        Deletes or deactivates projects associated with archived repos (ignore by default)
   --on-unarchived {ignore,reactivate}
                         If there is a deactivated project in Snyk, should the tool reactivate it if the repo is not
                         archived? (Warning: Use with caution, this will reactivate ALL projects associated with a repo)

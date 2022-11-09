@@ -94,7 +94,7 @@ def run():
 
             # If we've previously deactivated projects, we should activate them again
             # if the repo becomes "unarchived"
-            if not gh_repo_status.archived and common.ARGS.on_unarchive == "reactivate":
+            if not gh_repo_status.archived and common.ARGS.on_unarchived == "reactivate":
                 for project in snyk_repo.snyk_projects:
                     if not project["is_monitored"]:
                         activated_projects = snyk_repo.activate_manifests(common.ARGS.dry_run)
@@ -110,7 +110,7 @@ def run():
                                           f"{activated_project['manifest']}")
                         break  # We just needed to check if any one of the projects wasn't active
 
-            if gh_repo_status.archived and common.ARGS.on_archived != "retain":
+            if gh_repo_status.archived and common.ARGS.on_archived != "ignore":
                 app_print(snyk_repo.org_name,
                           snyk_repo.full_name,
                           f"Repo is archived")

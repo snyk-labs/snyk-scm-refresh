@@ -114,13 +114,13 @@ def parse_command_line_args():
     )
     parser.add_argument(
         "--on-archived",
-        help="Tells the tool what to do when a GitHub project is archived (Snyk projects retained by default)",
+        help="Tells the tool what to do when a GitHub project is archived (Snyk projects ignored by default)",
         required=False,
-        default="retain",
-        choices=['retain', 'deactivate', 'delete']
+        default="ignore",
+        choices=['ignore', 'deactivate', 'delete']
     )
     parser.add_argument(
-        "--on-unarchive",
+        "--on-unarchived",
         help="If the tool detects a Snyk project deactivated whilst the GitHub repo is not archived, what should it do?"
              " (By default the tool will ignore)",
         required=False,
