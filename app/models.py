@@ -2,10 +2,12 @@
 from dataclasses import dataclass
 from typing import List
 
+
 @dataclass
 class ImportFile:
     """File being imported"""
     path: str
+
 
 @dataclass
 class PendingDelete:
@@ -15,6 +17,7 @@ class PendingDelete:
     org_id: str
     org_name: str
     pending_repo: str
+
 
 @dataclass
 class ImportStatus:
@@ -29,6 +32,7 @@ class ImportStatus:
     files: List[ImportFile]
     pending_project_deletes: List[PendingDelete]
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class GithubRepoStatus:
     """Status of a Github repository"""
@@ -39,4 +43,5 @@ class GithubRepoStatus:
     repo_owner: str
     repo_full_name: str
     repo_default_branch: str
+    archived: bool
     

@@ -27,18 +27,18 @@ class MockResponse:
         self.headers = {"Location": "test_location"}
 
     def json(self):
-        response = {"full_name": "new_owner/new_repo", "default_branch": "master"}
+        response = {"full_name": "new_owner/new_repo", "default_branch": "master", "archived": False}
         return response
 
 @pytest.mark.parametrize(
-    "status_code, response_message, repo, name, owner, default_branch",
+    "status_code, response_message, repo, name, owner, default_branch, archived",
     [
-        (200, "Match", "test_org/test_repo", "test_repo", "test_owner", "master"),
-        (301, "Moved to new_repo", "new_owner/new_repo", "new_repo", "new_owner", ""),
-        (404, "Not Found", "test_org/test_repo", None, None, "")
+        (200, "Match", "test_org/test_repo", "test_repo", "test_owner", "master", False),
+        (301, "Moved to new_repo", "new_owner/new_repo", "new_repo", "new_owner", "", False),
+        (404, "Not Found", "test_org/test_repo", None, None, "", False)
     ],
 )
-def test_get_gh_repo_status_github(mocker, status_code, response_message, repo, name, owner, default_branch):
+def test_get_gh_repo_status_github(mocker, status_code, response_message, repo, name, owner, default_branch, archived):
 
     # TODO: assumes a successful redirect for the 301 case
     mocker.patch(
@@ -63,20 +63,21 @@ def test_get_gh_repo_status_github(mocker, status_code, response_message, repo, 
         snyk_repo_github["org_id"],
         snyk_repo_github["full_name"].split("/")[0],
         snyk_repo_github["full_name"],
-        default_branch
+        default_branch,
+        archived
     )
 
     assert get_gh_repo_status(snyk_repo_github) == repo_status
 
 @pytest.mark.parametrize(
-    "status_code, response_message, repo, name, owner, default_branch",
+    "status_code, response_message, repo, name, owner, default_branch, archived",
     [
-        (200, "Match", "test_org/test_repo", "test_repo", "test_owner", "master"),
-        (301, "Moved to new_repo", "new_owner/new_repo", "new_repo", "new_owner", ""),
-        (404, "Not Found", "test_org/test_repo", None, None, "")
+        (200, "Match", "test_org/test_repo", "test_repo", "test_owner", "master", False),
+        (301, "Moved to new_repo", "new_owner/new_repo", "new_repo", "new_owner", "", False),
+        (404, "Not Found", "test_org/test_repo", None, None, "", False)
     ],
 )
-def test_get_gh_repo_status_github_enterprise_cloud(mocker, status_code, response_message, repo, name, owner, default_branch):
+def test_get_gh_repo_status_github_enterprise_cloud(mocker, status_code, response_message, repo, name, owner, default_branch, archived):
 
     # TODO: assumes a successful redirect for the 301 case
     mocker.patch(
@@ -101,7 +102,8 @@ def test_get_gh_repo_status_github_enterprise_cloud(mocker, status_code, respons
         snyk_repo_github_enterprise["org_id"],
         snyk_repo_github_enterprise["full_name"].split("/")[0],
         snyk_repo_github_enterprise["full_name"],
-        default_branch
+        default_branch,
+        archived
     )
 
     assert get_gh_repo_status(snyk_repo_github_enterprise) == repo_status
@@ -144,7 +146,8 @@ def test_get_snyk_repos_from_snyk_projects():
         "type": "npm",
         "integration_id": "66d7ebef-9b36-464f-889c-b92c9ef5ce12",
         "branch_from_name": "",
-        "branch": "master"
+        "branch": "master",
+        "is_monitored": True
     },
     {
         "id": "12345",
@@ -159,7 +162,8 @@ def test_get_snyk_repos_from_snyk_projects():
         "type": "npm",
         "integration_id": "66d7ebef-9b36-464f-889c-b92c9ef5ce12",
         "branch_from_name": "",
-        "branch": "master"
+        "branch": "master",
+        "is_monitored": True
     },
     ]
 
@@ -275,7 +279,93 @@ def test_passes_manifest_filter():
     assert passes_manifest_filter(path_pass_2) == True
     assert passes_manifest_filter(path_fail_3) == False
 
+@pytest.fixture
+def snyk_projects_fixture():
+    class TestModels(object):
+        # @pytest.fixture
+        def organization(self):
+            org = Organization(
+                name="My Other Org", id="a04d9cbd-ae6e-44af-b573-0556b0ad4bd2"
+            )
+            org.client = SnykClient("token")
+            return org
 
+        def base_url(self):
+            return "https://snyk.io/api/v1"
+
+        def organization_url(self, base_url, organization):
+            return "%s/org/%s" % (base_url, organization.id)
+
+    snyk_gh_projects = [
+    {
+        "id": "12345",
+        "name": "scotte-snyk/test-project-1:package.json",
+        "repo_full_name": "scotte-snyk/test-project-1",
+        "repo_owner": "scotte-snyk",
+        "repo_name": "test-project-1",
+        "manifest": "package.json",
+        "org_id": "12345",
+        "org_name": "scotte-snyk",
+        "origin": "github",
+        "type": "npm",
+        "integration_id": "66d7ebef-9b36-464f-889c-b92c9ef5ce12",
+        "branch_from_name": "",
+        "branch": "master",
+        "is_monitored": True
+    },
+    {
+        "id": "12345",
+        "name": "scotte-snyk/test-project-2:package.json",
+        "repo_full_name": "scotte-snyk/test-project-2",
+        "repo_owner": "scotte-snyk",
+        "repo_name": "test-project-2",
+        "manifest": "package.json",
+        "org_id": "12345",
+        "org_name": "scotte-snyk",
+        "origin": "github",
+        "type": "npm",
+        "integration_id": "66d7ebef-9b36-464f-889c-b92c9ef5ce12",
+        "branch_from_name": "",
+        "branch": "master",
+        "is_monitored": False
+    },
+    ]
+
+    snyk_repo_github_enterprise = SnykRepo(
+        'new_owner/new_repo',
+        "1234-5678",
+        "new_owner",
+        "12345",
+        "github-enterprise",
+        "master",
+        snyk_gh_projects
+    )
+    return snyk_repo_github_enterprise
+
+
+def test_archived_repo_delete(snyk_projects_fixture, mocker):
+    mock = mocker.patch(
+        "app.utils.snyk_helper.delete_snyk_project"
+    )
+    snyk_projects_fixture.delete_manifests(dry_run=False)
+    assert mock.called_once
+
+
+def test_archived_repo_deactivate(snyk_projects_fixture, mocker):
+    mock = mocker.patch(
+        "app.utils.snyk_helper.deactivate_snyk_project"
+    )
+    snyk_projects_fixture.deactivate_manifests(dry_run=False)
+    assert mock.called_once
+
+
+def test_unarchived_repo_reactivate(snyk_projects_fixture, mocker):
+    mock = mocker.patch(
+        "app.utils.snyk_helper.activate_snyk_project"
+    )
+    snyk_projects_fixture.activate_manifests(dry_run=False)
+    assert mock.called
+    
 def test_import_manifest_exceeds_limit(mocker):
     """
     Pytest snyk_helper.import_manifest exceeding limit of manifest projects

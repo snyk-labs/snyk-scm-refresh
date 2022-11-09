@@ -71,8 +71,8 @@ def get_snyk_repos_from_snyk_projects(snyk_projects):
                          snyk_projects[i]["integration_id"],
                          snyk_projects[i]["origin"],
                          snyk_projects[i]["branch"],
-                         [x for x in snyk_projects \
-                             if x["repo_full_name"] == project["repo_full_name"]])
+                         [x for x in snyk_projects if x["repo_full_name"] ==
+                          project["repo_full_name"]])
             )
             repo_projects = []
 
@@ -153,7 +153,8 @@ def build_snyk_project_list(snyk_orgs, ARGS):
                         "type": project.type,
                         "integration_id": integration_id,
                         "branch_from_name": branch_from_name,
-                        "branch": project.branch
+                        "branch": project.branch,
+                        "is_monitored": project.isMonitored
                     }
                 )
 
@@ -234,6 +235,28 @@ def delete_snyk_project(project_id, org_id):
     try:
         project = org.projects.get(project_id)
         return project.delete()
+    except snyk.errors.SnykNotFoundError:
+        print(f"    - Project {project_id} not found in org {org_id} ...")
+        return False
+
+def deactivate_snyk_project(project_id, org_id):
+    """Deactivate a single Snyk project"""
+    org = common.snyk_client.organizations.get(org_id)
+
+    try:
+        project = org.projects.get(project_id)
+        return project.deactivate()
+    except snyk.errors.SnykNotFoundError:
+        print(f"    - Project {project_id} not found in org {org_id} ...")
+        return False
+
+def activate_snyk_project(project_id, org_id):
+    """Acitvate a single Syyk project"""
+    org = common.snyk_client.organizations.get(org_id)
+
+    try:
+        project = org.projects.get(project_id)
+        return project.activate()
     except snyk.errors.SnykNotFoundError:
         print(f"    - Project {project_id} not found in org {org_id} ...")
         return False
