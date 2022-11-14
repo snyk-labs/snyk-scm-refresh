@@ -10,6 +10,9 @@ from app.utils.github_utils import (
 )
 import argparse
 import configparser
+from _version import __version__
+
+USER_AGENT = f"pysnyk/snyk_services/snyk_scm_refresh/{__version__}"
 
 MANIFEST_PATTERN_SCA = '^(?![.]).*(package[.]json|Gemfile[.]lock|pom[.]xml|build[.]gradle|.*[.]lockfile|build[.]sbt|.*req.*[.]txt|Gopkg[.]lock|go[.]mod|vendor[.]json|packages[.]config|.*[.]csproj|.*[.]fsproj|.*[.]vbproj|project[.]json|project[.]assets[.]json|composer[.]lock|Podfile|Podfile[.]lock)$'
 MANIFEST_PATTERN_CONTAINER = '^.*(Dockerfile)$'
@@ -172,7 +175,7 @@ def toggle_to_bool(toggle_value) -> bool:
         return False
     return toggle_value
 
-snyk_client = SnykClient(SNYK_TOKEN)
+snyk_client = SnykClient(SNYK_TOKEN, user_agent=USER_AGENT)
 
 VERIFY_TLS = not ARGS.skip_scm_validation
 
