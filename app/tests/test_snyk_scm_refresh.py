@@ -9,6 +9,7 @@ from snyk.models import Project
 import common
 from app.snyk_repo import SnykRepo
 from app.models import GithubRepoStatus
+from _version import __version__
 
 from app.gh_repo import (
     get_gh_repo_status,
@@ -19,6 +20,8 @@ from app.utils.snyk_helper import (
     get_snyk_repos_from_snyk_projects,
     import_manifests
 )
+
+USER_AGENT = f"pysnyk/snyk_services/snyk_scm_refresh/{__version__}"
 
 class MockResponse:
     """ mock response for github check """
@@ -199,7 +202,7 @@ def test_get_snyk_project_for_repo():
             org = Organization(
                 name="My Other Org", id="a04d9cbd-ae6e-44af-b573-0556b0ad4bd2"
             )
-            org.client = snyk.SnykClient("token")
+            org.client = snyk.SnykClient("token", user_agent=USER_AGENT)
             return org
 
         def base_url(self):
@@ -287,7 +290,7 @@ def snyk_projects_fixture():
             org = Organization(
                 name="My Other Org", id="a04d9cbd-ae6e-44af-b573-0556b0ad4bd2"
             )
-            org.client = SnykClient("token")
+            org.client = SnykClient("token", user_agent=USER_AGENT)
             return org
 
         def base_url(self):
@@ -384,7 +387,7 @@ def test_import_manifest_exceeds_limit(mocker):
     org = Organization(
         name="My Other Org", id=org_id, slug="myotherorg", url=f"https://snyk.io/api/v1/org/{org_id}"
     )
-    org.client = snyk.SnykClient("token")
+    org.client = snyk.SnykClient("token", user_agent=USER_AGENT)
     mocker.patch("snyk.managers.OrganizationManager.get", return_value=org)
     mocker.patch("snyk.models.Organization.client", return_value=org.client)
 
