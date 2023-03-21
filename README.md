@@ -4,6 +4,11 @@
 
 # snyk-scm-refresh
 [![Known Vulnerabilities](https://snyk.io/test/github/snyk-labs/snyk-scm-refresh/badge.svg)](https://snyk.io/test/github/snyk-labs/snyk-scm-refresh) ![ci](https://github.com/snyk-labs/snyk-scm-refresh/actions/workflows/ci.yml/badge.svg)
+<blockquote>
+<g-emoji class="g-emoji" alias="warning" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/26a0.png">⚠️</g-emoji> <strong>NOTE:</strong>
+We highly reccomend making use of the [api-import-tool]([https://github.community/t/github-get-tree-api-limits-and-recursivity/1300/2](https://github.com/snyk-tech-services/snyk-api-import) **instead** of snyk-scm-refresh. The API import tool is under heavier development, is better supported and covers the majority of use cases that scm-refresh does.
+</blockquote>
+<br/>
 
 ### Description
 
