@@ -6,7 +6,7 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/snyk-labs/snyk-scm-refresh/badge.svg)](https://snyk.io/test/github/snyk-labs/snyk-scm-refresh) ![ci](https://github.com/snyk-labs/snyk-scm-refresh/actions/workflows/ci.yml/badge.svg)
 <blockquote>
 <g-emoji class="g-emoji" alias="warning" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/26a0.png">⚠️</g-emoji> <strong>NOTE:</strong>
-We highly reccomend making use of the <a href="https://github.com/snyk-tech-services/snyk-api-import">api-import-tool</a> instead of snyk-scm-refresh. The API import tool benefits from longer-term support, is better supported and covers the majority of use cases that scm-refresh does.
+We highly reccomend making use of the <a href="https://github.com/snyk-tech-services/snyk-api-import">api-import-tool</a> instead of snyk-scm-refresh. The API import tool benefits from longer-term support and covers the majority of use cases that scm-refresh does.
 </blockquote>
 <br/>
 
