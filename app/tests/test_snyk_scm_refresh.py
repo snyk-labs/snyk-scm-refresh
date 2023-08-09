@@ -247,7 +247,7 @@ def test_get_snyk_project_for_repo():
                 readOnly=False,
                 testFrequency='daily',
                 issueCountsBySeverity={"low": 8, "high": 13, "medium": 15},
-                imageTag='1.0.0',
+                isMonitored=True,
                 branch='main',
                 remoteRepoUrl='scotte-snyk/test-project-2'
         )
