@@ -220,14 +220,10 @@ def test_get_snyk_project_for_repo():
                 type='pip',
                 readOnly=False,
                 testFrequency='daily',
-                totalDependencies=32,
-                lastTestedDate='2020-07-28T07:15:24.981Z',
-                browseUrl='https://app.snyk.io/org/scott.esbrandt-ww8' \
-                    '/project/66d7ebef-9b36-464f-889c-b92c9ef5ce12',
                 issueCountsBySeverity={"low": 8, "high": 13, "medium": 15},
-                imageTag='0.0.0',
-                imageId=None,
-                isMonitored=True
+                isMonitored=True,
+                branch='main',
+                remoteRepoUrl='scotte-snyk/test-project-1'
         ),
         Project(name='scotte-snyk/test-project-1',
                 organization=TestModels.organization,
@@ -237,14 +233,10 @@ def test_get_snyk_project_for_repo():
                 type='sast',
                 readOnly=False,
                 testFrequency='daily',
-                totalDependencies=32,
-                lastTestedDate='2020-07-28T07:15:24.981Z',
-                browseUrl='https://app.snyk.io/org/scott.esbrandt-ww8' \
-                    '/project/66d7ebef-9b36-464f-889c-b92c9ef5ce12',
                 issueCountsBySeverity={"low": 8, "high": 13, "medium": 15},
-                imageTag='0.0.0',
-                imageId=None,
-                isMonitored=True
+                isMonitored=True,
+                branch='main',
+                remoteRepoUrl='scotte-snyk/test-project-1'
         ),
         Project(name='scotte-snyk/test-project-2:requirements.txt',
                 organization=TestModels.organization,
@@ -254,14 +246,10 @@ def test_get_snyk_project_for_repo():
                 type='npm',
                 readOnly=False,
                 testFrequency='daily',
-                totalDependencies=52,
-                lastTestedDate='2020-07-28T01:09:27.480Z',
-                browseUrl='https://app.snyk.io/org/scott.esbrandt-ww8' \
-                    '/project/93b82d1f-1544-45c9-b3bc-86e799c7225b',
                 issueCountsBySeverity={"low": 8, "high": 13, "medium": 15},
-                imageTag='1.0.0',
-                imageId=None,
-                isMonitored=True
+                isMonitored=True,
+                branch='main',
+                remoteRepoUrl='scotte-snyk/test-project-2'
         )
     ]
 
