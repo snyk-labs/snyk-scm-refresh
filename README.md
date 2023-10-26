@@ -1,13 +1,10 @@
 ![Snyk logo](https://snyk.io/style/asset/logo/snyk-print.svg)
 
-![snyk-oss-category](https://github.com/snyk-labs/oss-images/blob/main/oss-community.jpg)
-
 # snyk-scm-refresh
-[![Known Vulnerabilities](https://snyk.io/test/github/snyk-labs/snyk-scm-refresh/badge.svg)](https://snyk.io/test/github/snyk-labs/snyk-scm-refresh) ![ci](https://github.com/snyk-labs/snyk-scm-refresh/actions/workflows/ci.yml/badge.svg) 
 
-# ⛔️ DEPRECATED 
+# ⛔️ THIS REPOSITORY IS ARCHIVED. 
 
-**This repository is now deprecated. Please make use of the <a href="https://github.com/snyk-tech-services/snyk-api-import">snyk-api-import-tool</a> instead of snyk-scm-refresh. The snyk-api-import tool benefits from longer-term support and covers the majority of use cases that scm-refresh does. You can follow the <a href="Migration_Guide.md">migration guide </a> to help you make the translation. This repo will be archived as of October 1st 2023.**
+**This repository is archived and will not receive any updates or accept issues and pull requests. Please make use of the <a href="https://github.com/snyk-tech-services/snyk-api-import">snyk-api-import-tool</a> instead of snyk-scm-refresh. The snyk-api-import tool benefits from longer-term support and covers the majority of use cases that scm-refresh does. You can follow the <a href="Migration_Guide.md">migration guide </a> to help you make the translation. This repo will be archived as of October 1st 2023.**
 
 <!---blockquote>
 <g-emoji class="g-emoji" alias="warning" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/26a0.png">⚠️</g-emoji> <strong>NOTE:</strong>
@@ -17,12 +14,6 @@ We highly reccomend making use of the <a href="https://github.com/snyk-tech-serv
 <--->
 
 ### Description
-
-<blockquote>
-<g-emoji class="g-emoji" alias="warning" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/26a0.png">⚠️</g-emoji> <strong>WARNING:</strong>
-Python 3.10 introduces breaking changes that are currently incompatible with this tool. You must use Python 3.7-3.9
-</blockquote>
-<br/>
 
 Keeps Snyk projects in sync with their associated Github repos
 
